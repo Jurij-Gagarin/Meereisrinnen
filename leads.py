@@ -13,11 +13,11 @@ class Lead:
 
     def visualize_matrix(self, file_name=None, show=False):
         # very simple visualization of the lead fraction matrix
+        fig, ax = plt.subplots()
         if not file_name:
             file_name = f'./plots/{self.date}.png'
-        plt.imshow(self.lead_frac, cmap='RdYlBu')
-        plt.colorbar()
-        plt.axis('off')
+        fig.colorbar(ax.imshow(self.lead_frac, cmap='RdYlBu'), ax=ax)
+        ax.axis('off')
         if show:
             plt.show()
         plt.savefig(file_name)
@@ -33,6 +33,8 @@ class CoordinateGrid:
 
 
 if __name__ == '__main__':
-    lead1 = Lead('20191101')
-    lead1.visualize_matrix()
-
+    days = list(range(17, 22))
+    dates = [f'202002{day}' for day in days]
+    for date in dates:
+        lead = Lead(date)
+        lead.visualize_matrix()
