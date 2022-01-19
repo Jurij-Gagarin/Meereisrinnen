@@ -1,5 +1,4 @@
 import netCDF4 as nc
-import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -13,10 +12,16 @@ class Lead:
 
     def visualize_matrix(self, file_name=None, show=False):
         # very simple visualization of the lead fraction matrix
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(10,10))
         if not file_name:
             file_name = f'./plots/{self.date}.png'
-        fig.colorbar(ax.imshow(self.lead_frac, cmap='RdYlBu'), ax=ax)
+        #'RdYlBu_r'
+        im = ax.imshow(self.lead_frac, cmap='cool')
+        im.cmap.set_over('#dddddd')
+        im.cmap.set_under('#002633')
+
+        im.set_clim(0, 1.0)
+        fig.colorbar(im, ax=ax)
         ax.axis('off')
         if show:
             plt.show()
