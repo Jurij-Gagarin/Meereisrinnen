@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
+import numpy
 import numpy as np
 import leads
 
@@ -16,7 +17,8 @@ lead = leads.Lead(date)
 
 print(np.min(grid.lat), np.max(grid.lat))
 print(np.min(grid.lon), np.max(grid.lon))
-
-plt.contourf(grid.lon, grid.lat, lead.lead_frac, cmap='RdYlBu')
-
+lat = grid.lat.flatten()
+lon = grid.lon.flatten()
+#plt.contourf(grid.lon, grid.lat, numpy.zeros(np.shape(grid.lat)), cmap='RdYlBu')
+plt.scatter(lat, lon)
 plt.show()
