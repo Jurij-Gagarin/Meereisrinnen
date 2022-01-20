@@ -9,15 +9,15 @@ class Lead:
         self.date = date
         path = f'./data/{self.date}.nc'
         ds_lead = nc.Dataset(path)
-        self.lead_frac = ds_lead['Lead Fraction'][:]
+        self.lead_frac = ds_lead['Lead Fraction'][:].data
         self.del_row, self.del_col = [], []
 
-    def clear_matrix_ind(self, trigger=-0.1):
+    def clear_matrix(self, trigger=-0.1):
         # Returns indices of rows and columns without any data
         trigger = np.float32(trigger)
         m, n = self.lead_frac.shape
         row_clear, col_clear = np.repeat(trigger, n), np.repeat(trigger, m)
-        print(type(trigger), trigger, type(self.lead_frac[0][0]), self.lead_frac[0][10])
+
         for i, row in enumerate(self.lead_frac):
             if np.array_equal(row, row_clear):
                 self.del_row.append(i)
@@ -55,17 +55,24 @@ class CoordinateGrid:
         self.lat = ds_latlon['Lat Grid'][:]
         self.lon = ds_latlon['Lon Grid'][:]
 
+    def clear_grid(self, rows, cols):
+        self.lat = np.delete(self.lat, rows, 0)
+        self.lat = np.delete(self.lat, cols, 1)
+        self.lon = np.delete(self.lon, rows, 0)
+        self.lon = np.delete(self.lon, cols, 1)
+
 
 if __name__ == '__main__':
-    '''
+
     days = list(range(1, 29))
     dates = [f'202002{str(day).zfill(2)}' for day in days]
     for date in dates:
         lead = Lead(date)
+        lead.clear_matrix()
         lead.visualize_matrix()
-    '''
+
 
     lead = Lead('20200217')
     print(lead.lead_frac.shape)
-    clear = lead.clear_matrix_ind()
+    lead.clear_matrix()
     print(lead.lead_frac.shape)
