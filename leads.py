@@ -9,8 +9,12 @@ class Lead:
         self.date = date
         path = f'./data/{self.date}.nc'
         ds_lead = nc.Dataset(path)
-        self.lead_frac = ds_lead['Lead Fraction'][:].data
+        self.lead_frac = ds_lead['Lead Fraction'][:]
+
+        # assign instance later needed
         self.del_row, self.del_col = [], []
+        self.land, self.water = None, None
+        self.cloud, self.lead_data = None, None
 
     def clear_matrix(self, trigger=-0.1):
         # Returns indices of rows and columns without any data
@@ -46,6 +50,16 @@ class Lead:
         plt.savefig(file_name)
         plt.close(fig)
 
+    def sort_matrix(self):
+        # Creates lead frac matrix that contains only the data-points
+        self.land, self.water = np.copy(self.lead_frac), np.copy(self.lead_frac)
+        self.cloud, self.lead_data = np.copy(self.lead_frac), np.copy(self.lead_frac)
+        self.land[self.land != np.float32(1.2)] = 0
+        self.water[self.water != np.float32(-0.1)] = 0
+        self.cloud[self.cloud != np.float32(-0.2)] = 0
+        self.lead_data[self.lead_data > 1] = 0
+        self.lead_data[self.lead_data < 0] = 0
+
 
 class CoordinateGrid:
     def __init__(self):
@@ -63,16 +77,16 @@ class CoordinateGrid:
 
 
 if __name__ == '__main__':
-
+    '''
     days = list(range(1, 29))
     dates = [f'202002{str(day).zfill(2)}' for day in days]
     for date in dates:
         lead = Lead(date)
         lead.clear_matrix()
         lead.visualize_matrix()
-
-
+    '''
     lead = Lead('20200217')
-    print(lead.lead_frac.shape)
     lead.clear_matrix()
-    print(lead.lead_frac.shape)
+    a = lead.sort_matrix()
+    print(a)
+

@@ -21,6 +21,7 @@ def regional_lead_plot(date, extent=None, file_name=None, show=False):
     ax.coastlines(resolution='50m')
     extent = extent if extent else (-180.0, 180.0, 61, 90)
     ax.set_extent(extent, crs=ccrs.PlateCarree())
+    ax.set_title(f'Sea ice leads {lead.date[6:]}.{lead.date[4:6]}.{lead.date[:4]}')
 
     # plot data with color-bar
     im = ax.pcolormesh(grid.lon, grid.lat, lead.lead_frac, cmap='cool', transform=ccrs.PlateCarree())
@@ -35,5 +36,12 @@ def regional_lead_plot(date, extent=None, file_name=None, show=False):
     plt.close(fig)
 
 
+def two_lead_diff_plot(lead1, lead2):
+    grid = leads.CoordinateGrid()
+    lead_diff = lead1 - lead2
+    return
+
+
 if __name__ == '__main__':
-    pass
+    date = '20200217'
+    regional_lead_plot(date, show=True)
