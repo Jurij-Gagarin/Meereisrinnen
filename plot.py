@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import leads
-import numpy as np
 import data_science as ds
 
 
@@ -15,6 +14,13 @@ def setup_plot(extent):
     extent = extent if extent else (-180.0, 180.0, 68.5, 90)
     ax.set_extent(extent, crs=ccrs.PlateCarree())
     return fig, ax
+
+
+def show_plot(fig, file_name, show):
+    if show:
+        plt.show()
+    plt.savefig(file_name)
+    plt.close(fig)
 
 
 def regional_lead_plot(date, extent=None, file_name=None, show=False):
@@ -36,15 +42,14 @@ def regional_lead_plot(date, extent=None, file_name=None, show=False):
     ax.pcolormesh(grid.lon, grid.lat, lead.cloud, cmap='Blues', transform=ccrs.PlateCarree())
     fig.colorbar(im, ax=ax)
 
-    if show:
-        plt.show()
-    plt.savefig(file_name)
-    plt.close(fig)
+    # Show/Save the figure
+    show_plot(fig, file_name, show)
 
 
 def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False):
     if not file_name:
         file_name = f'./plots/diff{date1}-{date2}.png'
+
     # setup data
     lead1 = leads.Lead(date1)
     lead2 = leads.Lead(date2)
@@ -63,13 +68,12 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False):
     ax.pcolormesh(grid.lon, grid.lat, lead2.cloud, cmap='twilight', transform=ccrs.PlateCarree())
     fig.colorbar(im, ax=ax)
 
-    if show:
-        plt.show()
-    plt.savefig(file_name)
-    plt.close(fig)
+    # Show/Save the figure
+    show_plot(fig, file_name, show)
 
 
 if __name__ == '__main__':
-    #days = list(range(1, 29))
-    #dates = [f'202002{str(day).zfill(2)}' for day in days]
-    regional_lead_plot('20200217')
+    # days = list(range(1, 29))
+    # dates = [f'202002{str(day).zfill(2)}' for day in days]
+    # regional_lead_plot('20200217')
+    pass
