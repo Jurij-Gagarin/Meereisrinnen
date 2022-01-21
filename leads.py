@@ -11,10 +11,14 @@ class Lead:
         ds_lead = nc.Dataset(path)
         self.lead_frac = ds_lead['Lead Fraction'][:]
 
-        # assign instance later needed
+        # assign instances later needed
         self.del_row, self.del_col = [], []
         self.land, self.water = None, None
         self.cloud, self.lead_data = None, None
+
+        # sort data clean up date from rows/cols without entries
+        self.clear_matrix()
+        self.sort_matrix()
 
     def clear_matrix(self, trigger=-0.1):
         # Returns indices of rows and columns without any data
@@ -34,6 +38,7 @@ class Lead:
 
     def visualize_matrix(self, file_name=None, show=False):
         # very simple visualization of the lead fraction matrix
+        # This was used for testing. Might be removed in the future.
         fig, ax = plt.subplots(figsize=(10, 10))
         if not file_name:
             file_name = f'./plots/{self.date}.png'
@@ -54,20 +59,21 @@ class Lead:
         # Creates lead frac matrix that contains only the data-points
         self.land, self.water = np.copy(self.lead_frac), np.copy(self.lead_frac)
         self.cloud, self.lead_data = np.copy(self.lead_frac), np.copy(self.lead_frac)
-        self.land[self.land != np.float32(1.2)] = 0
-        self.water[self.water != np.float32(-0.1)] = 0
-        self.cloud[self.cloud != np.float32(-0.2)] = 0
-        self.lead_data[self.lead_data > 1] = 0
-        self.lead_data[self.lead_data < 0] = 0
+        self.land[self.land != np.float32(1.2)] = np.nan
+        self.water[self.water != np.float32(-0.1)] = np.nan
+        self.cloud[self.cloud != np.float32(-0.2)] = np.nan
+        self.lead_data[self.lead_data > 1] = np.nan
+        self.lead_data[self.lead_data < 0] = np.nan
 
 
 class CoordinateGrid:
-    def __init__(self):
+    def __init__(self, lead):
         # import corresponding coordinates
         path_grid = './data/LatLonGrid.nc'
         ds_latlon = nc.Dataset(path_grid)
         self.lat = ds_latlon['Lat Grid'][:]
         self.lon = ds_latlon['Lon Grid'][:]
+        self.clear_grid(lead.del_row, lead.del_col)
 
     def clear_grid(self, rows, cols):
         self.lat = np.delete(self.lat, rows, 0)
@@ -85,8 +91,5 @@ if __name__ == '__main__':
         lead.clear_matrix()
         lead.visualize_matrix()
     '''
-    lead = Lead('20200217')
-    lead.clear_matrix()
-    a = lead.sort_matrix()
-    print(a)
+
 
