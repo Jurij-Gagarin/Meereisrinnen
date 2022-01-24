@@ -87,12 +87,20 @@ class AirPressure:
         # import air pressure data
         if not path:
             path = '/home/jurij/Python/Physik/Meereisrinnen-Daten/ERA5_MSLP_2020_JanApr.nc'
-        ds_pressure = nc.Dataset(path)
-        print(ds_pressure)
+
+        ds = nc.Dataset(path)
+        self.msl = ds.variables['msl']
+        self.time = ds['time']
+        self.lon = ds['longitude']
+        self.lat = ds['latitude']
+
+        print(self.lat, self.lon)
 
 
 if __name__ == '__main__':
-    ds = AirPressure()
+    dataSet = AirPressure()
+    grid = CoordinateGrid(Lead('20200217'))
+    print(grid.lat)
     pass
 
 

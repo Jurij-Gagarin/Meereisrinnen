@@ -33,14 +33,16 @@ def regional_lead_plot(date, extent=None, file_name=None, show=False):
 
     # setup plot
     fig, ax = setup_plot(extent)
-    ax.set_title(f'Sea ice leads {lead.date[6:]}-{lead.date[4:6]}-{lead.date[:4]}')
+    ax.set_title(f'Sea ice leads {lead.date[6:]}-{lead.date[4:6]}-{lead.date[:4]} in % per lattice-cell',
+                 size=17)
 
     # plot data with color-bar
-    im = ax.pcolormesh(grid.lon, grid.lat, lead.lead_data, cmap='cool', transform=ccrs.PlateCarree())
+    im = ax.pcolormesh(grid.lon, grid.lat, 100*lead.lead_data, cmap='cool', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.water, cmap='coolwarm', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.land, cmap='twilight', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.cloud, cmap='Blues', transform=ccrs.PlateCarree())
-    fig.colorbar(im, ax=ax)
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.ax.tick_params(labelsize=17)
 
     # Show/Save the figure
     show_plot(fig, file_name, show)
@@ -58,22 +60,36 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False):
     # setup plot
     fig, ax = setup_plot(extent)
     ax.set_title(f'Sea ice leads difference {lead1.date[6:]}-{lead1.date[4:6]}-{lead1.date[:4]}/'
-                 f'{lead2.date[6:]}-{lead2.date[4:6]}-{lead2.date[:4]}')
+                 f'{lead2.date[6:]}-{lead2.date[4:6]}-{lead2.date[:4]} in % per lattice- cell',
+                 size=17)
 
     # plot data
     ds.two_lead_diff(lead1, lead2)
-    im = ax.pcolormesh(grid.lon, grid.lat, lead2.lead_data, cmap='bwr', transform=ccrs.PlateCarree())
+    im = ax.pcolormesh(grid.lon, grid.lat, 100*lead2.lead_data, cmap='bwr', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead2.water, cmap='coolwarm', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead2.land, cmap='Set2_r', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead2.cloud, cmap='twilight', transform=ccrs.PlateCarree())
-    fig.colorbar(im, ax=ax)
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.ax.tick_params(labelsize=17)
 
     # Show/Save the figure
     show_plot(fig, file_name, show)
 
 
+def regional_plot_month(extent=None):
+    days = list(range(1, 29))
+    dates = [f'202002{str(day).zfill(2)}' for day in days]
+    for date in dates:
+        regional_lead_plot(date, extent)
+
+
+def lead_diff_month(extent=None):
+    days = list(range(1, 28))
+    dates = [f'202002{str(day).zfill(2)}' for day in days]
+
+    for i in range(0, 28):
+        two_lead_diff_plot(dates[i], dates[i+1], extent)
+
+
 if __name__ == '__main__':
-    # days = list(range(1, 29))
-    # dates = [f'202002{str(day).zfill(2)}' for day in days]
-    # regional_lead_plot('20200217')
-    pass
+    lead_diff_month()
