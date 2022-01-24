@@ -82,14 +82,17 @@ class CoordinateGrid:
         self.lon = np.delete(self.lon, cols, 1)
 
 
+class AirPressure:
+    def __init__(self, path=None):
+        # import air pressure data
+        if not path:
+            path = '/home/jurij/Python/Physik/Meereisrinnen-Daten/ERA5_MSLP_2020_JanApr.nc'
+        ds_pressure = nc.Dataset(path)
+        print(ds_pressure)
+
+
 if __name__ == '__main__':
-    '''
-    days = list(range(1, 29))
-    dates = [f'202002{str(day).zfill(2)}' for day in days]
-    for date in dates:
-        lead = Lead(date)
-        lead.clear_matrix()
-        lead.visualize_matrix()
-    '''
+    ds = AirPressure()
+    pass
 
 
