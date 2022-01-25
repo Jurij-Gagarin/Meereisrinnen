@@ -98,6 +98,7 @@ def regional_plot_month(extent=None):
     dates = [f'202002{str(day).zfill(2)}' for day in days]
     for date in dates:
         regional_lead_plot(date, extent)
+        print(date)
 
 
 def lead_diff_month(extent=None):
@@ -106,8 +107,10 @@ def lead_diff_month(extent=None):
 
     for i in range(0, 28):
         two_lead_diff_plot(dates[i], dates[i+1], extent)
+        print(i)
 
 
 if __name__ == '__main__':
     #regional_lead_plot('20200217', show=True)
-    two_lead_diff_plot('20200217', '20200218', show=True)
+    #regional_plot_month()
+    pass
