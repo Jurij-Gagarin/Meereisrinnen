@@ -77,16 +77,15 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False):
     show_plot(fig, file_name, show)
 
 
-def msl_plot():
-    fig, ax = setup_plot([180, -180, 90, 45])
+def msl_plot(date):
+    fig, ax = setup_plot([-180, 180, 90, 30])
     dataSet = leads.AirPressure()
-    lead = leads.Lead('20200217')
-    grid = leads.CoordinateGrid(lead)
+    lead = leads.Lead(date)
 
-    ax.pcolormesh(dataSet.lon, dataSet.lat, np.zeros(dataSet.lon.shape), cmap='viridis_r', transform=ccrs.PlateCarree(),
-                  alpha=.5, edgecolors='black')
-    ax.pcolormesh(grid.lon, grid.lat, np.ones(grid.lat.shape), transform=ccrs.PlateCarree(), alpha=.5, edgecolors='black')
+    contours = ax.contour(dataSet.lon, dataSet.lat, dataSet.get_msl(date), colors='green', transform=ccrs.PlateCarree())
+    plt.clabel(contours, inline=True, fontsize=8)
     plt.show()
+
 
 def regional_plot_month(extent=None):
     days = list(range(1, 29))
@@ -104,4 +103,4 @@ def lead_diff_month(extent=None):
 
 
 if __name__ == '__main__':
-    msl_plot()
+    msl_plot('20200217')

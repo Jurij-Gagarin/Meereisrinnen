@@ -1,3 +1,6 @@
+import datetime
+
+import cftime
 import netCDF4 as nc
 import matplotlib.pyplot as plt
 import numpy as np
@@ -73,7 +76,6 @@ class CoordinateGrid:
         ds_latlon = nc.Dataset(path_grid)
         self.lat = ds_latlon['Lat Grid'][:]
         self.lon = ds_latlon['Lon Grid'][:]
-        print(self.lon)
         self.clear_grid(lead.del_row, lead.del_col)
 
     def clear_grid(self, rows, cols):
@@ -84,23 +86,36 @@ class CoordinateGrid:
 
 
 class AirPressure:
-    def __init__(self, path=None):
+    def __init__(self, path=None, windows=False):
         # import air pressure data
         if not path:
-            path = '/home/jurij/Python/Physik/Meereisrinnen-Daten/ERA5_MSLP_2020_JanApr.nc'
+            path = 'data/ERA5_MSLP_2020_JanApr.nc'
 
         ds = nc.Dataset(path)
         self.msl = ds.variables['msl']
-        print(self.msl[0].shape)
         self.time = ds['time']
+
         self.lon = np.tile(ds['longitude'][:], (161, 1))
         self.lat = np.transpose(np.tile(ds['latitude'][:], (1440, 1)))
 
+    def get_msl(self, date):
+        # Get time index
+        # datetime(year, month, day, hour, minute, second, microsecond)
+        d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
+        d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
+        t1, t2 = cftime.date2index([d1, d2], self.time)
+
+        # Calculate mean msl of the given date
+        mean_msl = np.zeros(self.msl[0].shape)
+        for t in range(t1, t2 + 1):
+            mean_msl += self.msl[t]
+        return .25 * mean_msl
+
 
 if __name__ == '__main__':
-    dataSet = AirPressure()
-    grid = CoordinateGrid(Lead('20200217'))
-
     pass
+
+
+
 
 
