@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import leads
 import data_science as ds
+import numpy as np
 
 
 def setup_plot(extent):
@@ -76,6 +77,17 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False):
     show_plot(fig, file_name, show)
 
 
+def msl_plot():
+    fig, ax = setup_plot([180, -180, 90, 45])
+    dataSet = leads.AirPressure()
+    lead = leads.Lead('20200217')
+    grid = leads.CoordinateGrid(lead)
+
+    ax.pcolormesh(dataSet.lon, dataSet.lat, np.zeros(dataSet.lon.shape), cmap='viridis_r', transform=ccrs.PlateCarree(),
+                  alpha=.5, edgecolors='black')
+    ax.pcolormesh(grid.lon, grid.lat, np.ones(grid.lat.shape), transform=ccrs.PlateCarree(), alpha=.5, edgecolors='black')
+    plt.show()
+
 def regional_plot_month(extent=None):
     days = list(range(1, 29))
     dates = [f'202002{str(day).zfill(2)}' for day in days]
@@ -92,4 +104,4 @@ def lead_diff_month(extent=None):
 
 
 if __name__ == '__main__':
-    lead_diff_month()
+    msl_plot()

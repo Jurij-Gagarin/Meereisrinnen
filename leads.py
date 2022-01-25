@@ -73,6 +73,7 @@ class CoordinateGrid:
         ds_latlon = nc.Dataset(path_grid)
         self.lat = ds_latlon['Lat Grid'][:]
         self.lon = ds_latlon['Lon Grid'][:]
+        print(self.lon)
         self.clear_grid(lead.del_row, lead.del_col)
 
     def clear_grid(self, rows, cols):
@@ -90,17 +91,16 @@ class AirPressure:
 
         ds = nc.Dataset(path)
         self.msl = ds.variables['msl']
+        print(self.msl[0].shape)
         self.time = ds['time']
-        self.lon = ds['longitude']
-        self.lat = ds['latitude']
-
-        print(self.lat, self.lon)
+        self.lon = np.tile(ds['longitude'][:], (161, 1))
+        self.lat = np.transpose(np.tile(ds['latitude'][:], (1440, 1)))
 
 
 if __name__ == '__main__':
     dataSet = AirPressure()
     grid = CoordinateGrid(Lead('20200217'))
-    print(grid.lat)
+
     pass
 
 
