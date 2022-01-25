@@ -24,7 +24,7 @@ def show_plot(fig, file_name, show):
     plt.close(fig)
 
 
-def regional_lead_plot(date, extent=None, file_name=None, show=False):
+def regional_lead_plot(date, extent=None, file_name=None, show=False, msl=True):
     if not file_name:
         file_name = f'./plots/{date}.png'
 
@@ -37,7 +37,7 @@ def regional_lead_plot(date, extent=None, file_name=None, show=False):
     ax.set_title(f'Sea ice leads {lead.date[6:]}-{lead.date[4:6]}-{lead.date[:4]} in % per lattice-cell',
                  size=17)
 
-    # plot data with color-bar
+    # plot lead data with color-bar
     im = ax.pcolormesh(grid.lon, grid.lat, 100*lead.lead_data, cmap='cool', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.water, cmap='coolwarm', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.land, cmap='twilight', transform=ccrs.PlateCarree())
@@ -45,11 +45,15 @@ def regional_lead_plot(date, extent=None, file_name=None, show=False):
     cbar = fig.colorbar(im, ax=ax)
     cbar.ax.tick_params(labelsize=17)
 
+    # plot msl data with colorbar
+    if msl:
+        msl_plot(date, fig, ax, 'Oranges_r')
+
     # Show/Save the figure
     show_plot(fig, file_name, show)
 
 
-def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False):
+def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False, msl=True):
     if not file_name:
         file_name = f'./plots/diff{date1}-{date2}.png'
 
@@ -73,18 +77,20 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False):
     cbar = fig.colorbar(im, ax=ax)
     cbar.ax.tick_params(labelsize=17)
 
+    # plot msl
+    msl_plot(date2, fig, ax, 'summer')
+
     # Show/Save the figure
     show_plot(fig, file_name, show)
 
 
-def msl_plot(date):
-    fig, ax = setup_plot([-180, 180, 90, 30])
-    dataSet = leads.AirPressure()
-    lead = leads.Lead(date)
-
-    contours = ax.contour(dataSet.lon, dataSet.lat, dataSet.get_msl(date), colors='green', transform=ccrs.PlateCarree())
-    plt.clabel(contours, inline=True, fontsize=8)
-    plt.show()
+def msl_plot(date, fig, ax, cmap):
+    data_set = leads.AirPressure()
+    contours = ax.contour(data_set.lon, data_set.lat, data_set.get_msl(date), cmap=cmap,
+                          transform=ccrs.PlateCarree())#, levels=np.linspace(90000, 110000, 30000))
+    ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
+    #cbar = fig.colorbar(contours, ax=ax)
+    #cbar.ax.tick_params(labelsize=17)
 
 
 def regional_plot_month(extent=None):
@@ -103,4 +109,5 @@ def lead_diff_month(extent=None):
 
 
 if __name__ == '__main__':
-    msl_plot('20200217')
+    #regional_lead_plot('20200217', show=True)
+    two_lead_diff_plot('20200217', '20200218', show=True)
