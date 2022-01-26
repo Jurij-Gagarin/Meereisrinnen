@@ -89,28 +89,29 @@ def msl_plot(date, fig, ax, cmap):
     contours = ax.contour(data_set.lon, data_set.lat, data_set.get_msl(date), cmap=cmap,
                           transform=ccrs.PlateCarree())#, levels=np.linspace(90000, 110000, 30000))
     ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
-    #cbar = fig.colorbar(contours, ax=ax)
-    #cbar.ax.tick_params(labelsize=17)
 
 
-def regional_plot_month(extent=None):
-    days = list(range(1, 29))
-    dates = [f'202002{str(day).zfill(2)}' for day in days]
-    for date in dates:
-        regional_lead_plot(date, extent)
-        print(date)
-
-
-def lead_diff_month(extent=None):
-    days = list(range(1, 28))
-    dates = [f'202002{str(day).zfill(2)}' for day in days]
-
-    for i in range(0, 28):
-        two_lead_diff_plot(dates[i], dates[i+1], extent)
-        print(i)
+def plots_for_case(case, path_dir, extent=None):
+    for i, date in enumerate(case):
+        file_name = path_dir + f'/{date}'
+        print(f'Working on plots for date:{date}')
+        regional_lead_plot(date, extent=extent, file_name=file_name)
+        try:
+            file_name = path_dir + f'/diff-{case[i]}-{case[i+1]}'
+            two_lead_diff_plot(case[i], case[i+1], extent=extent, file_name=file_name)
+        except IndexError:
+            pass
 
 
 if __name__ == '__main__':
-    #regional_lead_plot('20200217', show=True)
-    #regional_plot_month()
-    pass
+    case1 = ['20200216', '20200217', '20200218', '20200219', '20200220', '20200221', '20200222']
+    extent1 = [-70, 100, 65, 90]
+    case2 = ['20200114', '20200115', '20200116', '20200117', '20200118', '20200119', '20200120']
+    extent2 = None
+    case3 = ['20200128', '20200129', '20200130', '20200131', '20200201', '20200202', '20200203']
+    extent3 = None
+    case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
+    extent4 = None
+    path = './plots/case4'
+
+    plots_for_case(case4, path, extent4)
