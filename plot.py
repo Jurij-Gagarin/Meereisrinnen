@@ -91,6 +91,14 @@ def msl_plot(date, fig, ax, cmap):
     ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
 
 
+def era5_plot(date, cmap):
+    fig, ax = setup_plot(None)
+    data_set = leads.Era5Regrid(leads.Lead(date))
+    contours = ax.contour(data_set.lon, data_set.lat, data_set.get_msl(date), cmap=cmap,
+                          transform=ccrs.PlateCarree())
+    plt.show()
+
+
 def plots_for_case(case, path_dir, extent=None):
     for i, date in enumerate(case):
         file_name = path_dir + f'/{date}'
@@ -114,4 +122,4 @@ if __name__ == '__main__':
     extent4 = None
     path = './plots/case4'
 
-    plots_for_case(case4, path, extent4)
+    era5_plot('20200217', 'Greens')

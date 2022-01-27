@@ -1,2 +1,8 @@
 /data/ERA5_MSLP_2019_NovDec.nc
 /data/ERA5_MSLP_2020_JanApr.nc
+/data/20200217_regrid.nc
+/data/ERA5_2020_regrid.nc
+/data/mygrid
+/xvals.txt
+/yvals.txt
+/data/LatLonGrid_regrid.nc

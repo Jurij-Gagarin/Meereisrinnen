@@ -36,8 +36,8 @@ class Lead:
             if np.array_equal(self.lead_frac[:, i], col_clear):
                 self.del_col.append(i)
 
-        self.lead_frac = np.delete(self.lead_frac, self.del_row, 0)
-        self.lead_frac = np.delete(self.lead_frac, self.del_col, 1)
+        #self.lead_frac = np.delete(self.lead_frac, self.del_row, 0)
+        #self.lead_frac = np.delete(self.lead_frac, self.del_col, 1)
 
     def visualize_matrix(self, file_name=None, show=False):
         # very simple visualization of the lead fraction matrix
@@ -62,6 +62,7 @@ class Lead:
         # Creates lead frac matrix that contains only the data-points
         self.land, self.water = np.copy(self.lead_frac), np.copy(self.lead_frac)
         self.cloud, self.lead_data = np.copy(self.lead_frac), np.copy(self.lead_frac)
+
         self.land[self.land != np.float32(1.2)] = np.nan
         self.water[self.water != np.float32(-0.1)] = np.nan
         self.cloud[self.cloud != np.float32(-0.2)] = np.nan
@@ -76,7 +77,7 @@ class CoordinateGrid:
         ds_latlon = nc.Dataset(path_grid)
         self.lat = ds_latlon['Lat Grid'][:]
         self.lon = ds_latlon['Lon Grid'][:]
-        self.clear_grid(lead.del_row, lead.del_col)
+        # self.clear_grid(lead.del_row, lead.del_col)
 
     def clear_grid(self, rows, cols):
         self.lat = np.delete(self.lat, rows, 0)
@@ -84,9 +85,12 @@ class CoordinateGrid:
         self.lon = np.delete(self.lon, rows, 0)
         self.lon = np.delete(self.lon, cols, 1)
 
+    def vals(self):
+        np.savetxt('yvals.txt', self.lat.flatten(), delimiter=' ')
+        np.savetxt('xvals.txt', self.lon.flatten(), delimiter=' ')
 
 class AirPressure:
-    def __init__(self, path=None, windows=False):
+    def __init__(self, path=None):
         # import air pressure data
         if not path:
             path = 'data/ERA5_MSLP_2020_JanApr.nc'
@@ -112,8 +116,37 @@ class AirPressure:
         return .25 * mean_msl
 
 
+class Era5Regrid:
+    def __init__(self, lead, path=None):
+        # import air pressure data
+        if not path:
+            path = 'data/ERA5_2020_regrid.nc'
+
+        ds = nc.Dataset(path)
+        self.shape = lead.lead_frac.shape
+        self.time = ds['time']
+        self.lon = np.reshape(ds.variables['lon'], self.shape)
+        self.lat = np.reshape(ds.variables['lat'], self.shape)
+        self.msl = ds.variables['msl']
+
+    def get_msl(self, date):
+        d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
+        d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
+        t1, t2 = cftime.date2index([d1, d2], self.time)
+
+        mean_msl = np.zeros(self.shape)
+        for t in range(t1, t2 + 1):
+            mean_msl += np.reshape(self.msl[t], self.shape)
+        return .25 * mean_msl
+
+
 if __name__ == '__main__':
-    pass
+    lead = Lead('20200217')
+    test = Era5Regrid(lead)
+    print(test.get_msl('20200217'))
+
+    grid = CoordinateGrid(lead)
+
 
 
 
