@@ -20,5 +20,11 @@ def two_lead_diff(lead1, lead2):
     lead2.land = compare_nan(lead1.land, lead2.land)
 
 
+def clear_matrix(matrix, rows, cols):
+    matrix = np.delete(matrix, rows, 0)
+    matrix = np.delete(matrix, cols, 1)
+    return matrix
+
+
 if __name__ == '__main__':
     pass

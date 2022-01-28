@@ -1,8 +1,14 @@
 /data/ERA5_MSLP_2019_NovDec.nc
 /data/ERA5_MSLP_2020_JanApr.nc
-/data/20200217_regrid.nc
 /data/ERA5_2020_regrid.nc
 /data/mygrid
-/xvals.txt
-/yvals.txt
+/data/xvals.txt
+/data/yvals.txt
 /data/LatLonGrid_regrid.nc
+/data/ERA5_2020_regrid_bic.nc
+/data/ERA5_2020_regrid_bil.nc
+/data/ERA5_2020_regrid_con.nc
+/data/ERA5_2020_regrid_dis.nc
+/data/ERA5_2020_regrid_laf.nc
+/data/ERA5_2020_regrid_nn.nc
+/data/Cyclone_Occurence_all_2019_2020.nc

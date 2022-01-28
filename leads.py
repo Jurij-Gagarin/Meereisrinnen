@@ -1,5 +1,5 @@
 import datetime
-
+import data_science as ds
 import cftime
 import netCDF4 as nc
 import matplotlib.pyplot as plt
@@ -13,6 +13,7 @@ class Lead:
         path = f'./data/{self.date}.nc'
         ds_lead = nc.Dataset(path)
         self.lead_frac = ds_lead['Lead Fraction'][:]
+        self.old_shape = self.lead_frac.shape
 
         # assign instances later needed
         self.del_row, self.del_col = [], []
@@ -36,8 +37,8 @@ class Lead:
             if np.array_equal(self.lead_frac[:, i], col_clear):
                 self.del_col.append(i)
 
-        #self.lead_frac = np.delete(self.lead_frac, self.del_row, 0)
-        #self.lead_frac = np.delete(self.lead_frac, self.del_col, 1)
+        self.lead_frac = np.delete(self.lead_frac, self.del_row, 0)
+        self.lead_frac = np.delete(self.lead_frac, self.del_col, 1)
 
     def visualize_matrix(self, file_name=None, show=False):
         # very simple visualization of the lead fraction matrix
@@ -77,17 +78,13 @@ class CoordinateGrid:
         ds_latlon = nc.Dataset(path_grid)
         self.lat = ds_latlon['Lat Grid'][:]
         self.lon = ds_latlon['Lon Grid'][:]
-        # self.clear_grid(lead.del_row, lead.del_col)
-
-    def clear_grid(self, rows, cols):
-        self.lat = np.delete(self.lat, rows, 0)
-        self.lat = np.delete(self.lat, cols, 1)
-        self.lon = np.delete(self.lon, rows, 0)
-        self.lon = np.delete(self.lon, cols, 1)
+        self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
+        self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
 
     def vals(self):
         np.savetxt('yvals.txt', self.lat.flatten(), delimiter=' ')
         np.savetxt('xvals.txt', self.lon.flatten(), delimiter=' ')
+
 
 class AirPressure:
     def __init__(self, path=None):
@@ -113,31 +110,38 @@ class AirPressure:
         mean_msl = np.zeros(self.msl[0].shape)
         for t in range(t1, t2 + 1):
             mean_msl += self.msl[t]
-        return .25 * mean_msl
+        return .0025 * mean_msl
 
 
 class Era5Regrid:
     def __init__(self, lead, path=None):
         # import air pressure data
         if not path:
-            path = 'data/ERA5_2020_regrid.nc'
+            path = 'data/ERA5_2020_regrid_bil.nc'
+        self.lead = lead
 
-        ds = nc.Dataset(path)
-        self.shape = lead.lead_frac.shape
-        self.time = ds['time']
-        self.lon = np.reshape(ds.variables['lon'], self.shape)
-        self.lat = np.reshape(ds.variables['lat'], self.shape)
-        self.msl = ds.variables['msl']
+        data_set = nc.Dataset(path)
+        self.shape = lead.old_shape
+        self.time = data_set['time']
+        self.lon = np.reshape(data_set.variables['lon'], self.shape)
+        self.lat = np.reshape(data_set.variables['lat'], self.shape)
+        self.msl = data_set.variables['msl']
+
+        self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
+        self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
 
     def get_msl(self, date):
         d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
         d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
         t1, t2 = cftime.date2index([d1, d2], self.time)
 
-        mean_msl = np.zeros(self.shape)
+        new_shape = self.lon.shape
+        mean_msl = np.zeros(new_shape)
         for t in range(t1, t2 + 1):
-            mean_msl += np.reshape(self.msl[t], self.shape)
-        return .25 * mean_msl
+            add_msl = np.reshape(self.msl[t], self.shape)
+            add_msl = ds.clear_matrix(add_msl, self.lead.del_row, self.lead.del_col)
+            mean_msl += add_msl
+        return .0025 * mean_msl
 
 
 if __name__ == '__main__':

@@ -48,6 +48,7 @@ def regional_lead_plot(date, extent=None, file_name=None, show=False, msl=True):
     # plot msl data with colorbar
     if msl:
         msl_plot(date, fig, ax, 'Oranges_r')
+        # era5_plot(date, fig, ax, 'Oranges_r', extent)
 
     # Show/Save the figure
     show_plot(fig, file_name, show)
@@ -78,25 +79,27 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False, ms
     cbar.ax.tick_params(labelsize=17)
 
     # plot msl
-    msl_plot(date2, fig, ax, 'summer')
+    if msl:
+        msl_plot(date2, fig, ax, 'summer')
 
     # Show/Save the figure
     show_plot(fig, file_name, show)
 
 
 def msl_plot(date, fig, ax, cmap):
+    # Plots contour lines of mean sea level air pressure.
     data_set = leads.AirPressure()
     contours = ax.contour(data_set.lon, data_set.lat, data_set.get_msl(date), cmap=cmap,
-                          transform=ccrs.PlateCarree())#, levels=np.linspace(90000, 110000, 30000))
+                          transform=ccrs.PlateCarree(), levels=10)
     ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
 
 
-def era5_plot(date, cmap):
-    fig, ax = setup_plot(None)
+def era5_plot(date, fig, ax, cmap, extent):
+    # Era5 Dataset is typically not used for plotting. This function might be removed in the near future
     data_set = leads.Era5Regrid(leads.Lead(date))
     contours = ax.contour(data_set.lon, data_set.lat, data_set.get_msl(date), cmap=cmap,
-                          transform=ccrs.PlateCarree())
-    plt.show()
+                          transform=ccrs.PlateCarree(), levels=15)
+    ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
 
 
 def plots_for_case(case, path_dir, extent=None):
@@ -120,6 +123,7 @@ if __name__ == '__main__':
     extent3 = None
     case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
     extent4 = None
-    path = './plots/case4'
+    path = './plots/case1'
 
-    era5_plot('20200217', 'Greens')
+    #plots_for_case(case1, path, extent1)
+    regional_lead_plot('20200129', show=True)
