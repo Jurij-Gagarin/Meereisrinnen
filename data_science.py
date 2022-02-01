@@ -26,5 +26,16 @@ def clear_matrix(matrix, rows, cols):
     return matrix
 
 
+def variable_manip(var, matrix):
+    if var == 'cyclone_occurence':
+        return np.ceil(matrix)
+    elif var == 'msl':
+        return .01 * matrix
+    elif var == 'u10':
+        return matrix
+    elif var == 't2m':
+        return matrix
+
+
 if __name__ == '__main__':
     pass

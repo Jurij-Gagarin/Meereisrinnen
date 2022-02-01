@@ -82,42 +82,54 @@ class CoordinateGrid:
         self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
 
     def vals(self):
+        # Method used to generate grid description, should not be used anymore
         np.savetxt('yvals.txt', self.lat.flatten(), delimiter=' ')
         np.savetxt('xvals.txt', self.lon.flatten(), delimiter=' ')
 
 
-class AirPressure:
-    def __init__(self, path=None):
+class Era5:
+    def __init__(self, variable):
         # import air pressure data
-        if not path:
-            path = 'data/ERA5_MSLP_2020_JanApr.nc'
+        self.var = variable
+        variable_dict = {'msl': 'data/ERA5_MSLP_2020_JanApr.nc', 'u10': 'data/ERA5_Wind_2020_JanApr.nc',
+                         't2m': 'data/ERA5_T2m_2020_JanApr.nc',
+                         'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new.nc'}
 
-        ds = nc.Dataset(path)
-        self.msl = ds.variables['msl']
-        self.time = ds['time']
+        path = variable_dict[self.var]
+        data_set = nc.Dataset(path)
 
-        self.lon = np.tile(ds['longitude'][:], (161, 1))
-        self.lat = np.transpose(np.tile(ds['latitude'][:], (1440, 1)))
+        # Assign variables
+        self.variable = data_set.variables[self.var]
+        self.time = data_set['time']
+        # print(self.variable[210])
 
-    def get_msl(self, date):
+        # Build grid matrix
+        self.lon = np.tile(data_set['longitude'][:], (161, 1))
+        self.lat = np.transpose(np.tile(data_set['latitude'][:], (1440, 1)))
+
+    def get_variable(self, date):
         # Get time index
         # datetime(year, month, day, hour, minute, second, microsecond)
         d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
         d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
         t1, t2 = cftime.date2index([d1, d2], self.time)
 
-        # Calculate mean msl of the given date
-        mean_msl = np.zeros(self.msl[0].shape)
+        # Calculate mean variable of the given date
+        mean_var = np.zeros(self.variable[0].shape)
         for t in range(t1, t2 + 1):
-            mean_msl += self.msl[t]
-        return .0025 * mean_msl
+            print(t)
+            mean_var = np.add(mean_var, self.variable[t])
+        return ds.variable_manip(self.var, .25 * mean_var)
 
 
 class Era5Regrid:
-    def __init__(self, lead, path=None):
+    def __init__(self, lead, variable):
         # import air pressure data
-        if not path:
-            path = 'data/ERA5_2020_regrid_bil.nc'
+        variable_dict = {'variable': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_2020_Wind_regrid_bil.nc',
+                         't2m': 'data/ERA5_2020_T2m_regrid_bil.nc',
+                         'track': 'data/Cyclone_Occurence_all_2019_2020_new_regrid_bil.nc'}
+
+        path = variable_dict[variable]
         self.lead = lead
 
         data_set = nc.Dataset(path)
@@ -125,15 +137,18 @@ class Era5Regrid:
         self.time = data_set['time']
         self.lon = np.reshape(data_set.variables['lon'], self.shape)
         self.lat = np.reshape(data_set.variables['lat'], self.shape)
-        self.msl = data_set.variables['msl']
+        self.msl = data_set.variables['variable']
 
         self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
         self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
 
-    def get_msl(self, date):
+    def get_time(self, date):
         d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
         d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
-        t1, t2 = cftime.date2index([d1, d2], self.time)
+        return cftime.date2index([d1, d2], self.time)
+
+    def get_msl(self, date):
+        t1, t2 = self.get_time(date)
 
         new_shape = self.lon.shape
         mean_msl = np.zeros(new_shape)
@@ -145,11 +160,8 @@ class Era5Regrid:
 
 
 if __name__ == '__main__':
-    lead = Lead('20200217')
-    test = Era5Regrid(lead)
-    print(test.get_msl('20200217'))
-
-    grid = CoordinateGrid(lead)
+    measurement = Era5('t2m')
+    print(measurement.get_variable('20200217'))
 
 
 

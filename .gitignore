@@ -5,10 +5,11 @@
 /data/xvals.txt
 /data/yvals.txt
 /data/LatLonGrid_regrid.nc
-/data/ERA5_2020_regrid_bic.nc
-/data/ERA5_2020_regrid_bil.nc
-/data/ERA5_2020_regrid_con.nc
-/data/ERA5_2020_regrid_dis.nc
-/data/ERA5_2020_regrid_laf.nc
-/data/ERA5_2020_regrid_nn.nc
+/data/ERA5_2020_MSL_regrid_bil.nc
 /data/Cyclone_Occurence_all_2019_2020.nc
+/data/ERA5_T2m_2020_JanApr.nc
+/data/ERA5_Wind_2020_JanApr.nc
+/data/ERA5_2020_T2m_regrid_bil.nc
+/data/ERA5_2020_Wind_regrid_bil.nc
+/data/Cyclone_Occurence_all_2019_2020_new.nc
+/data/Cyclone_Occurence_all_2019_2020_new_regrid_bil.nc
