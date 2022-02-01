@@ -38,4 +38,4 @@ def variable_manip(var, matrix):
 
 
 if __name__ == '__main__':
-    pass
+    print('Hallo' + '!')

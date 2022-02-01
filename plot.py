@@ -24,9 +24,8 @@ def show_plot(fig, file_name, show):
     plt.close(fig)
 
 
-def regional_lead_plot(date, extent=None, file_name=None, show=False, variable=None):
-    if not file_name:
-        file_name = f'./plots/{date}.png'
+def regional_lead_plot(date, extent=None, show=False, variable=None, plot_leads=True):
+    file_name = date
 
     # setup data
     lead = leads.Lead(date)
@@ -34,27 +33,28 @@ def regional_lead_plot(date, extent=None, file_name=None, show=False, variable=N
 
     # setup plot
     fig, ax = setup_plot(extent)
-    ax.set_title(f'Sea ice leads {lead.date[6:]}-{lead.date[4:6]}-{lead.date[:4]} in % per lattice-cell',
-                 size=17)
+    title = f'{lead.date[6:]}-{lead.date[4:6]}-{lead.date[:4]}'
 
     # plot lead data with color-bar
-    im = ax.pcolormesh(grid.lon, grid.lat, 100 * lead.lead_data, cmap='cool', transform=ccrs.PlateCarree())
-    ax.pcolormesh(grid.lon, grid.lat, lead.water, cmap='coolwarm', transform=ccrs.PlateCarree())
-    ax.pcolormesh(grid.lon, grid.lat, lead.land, cmap='twilight', transform=ccrs.PlateCarree())
-    ax.pcolormesh(grid.lon, grid.lat, lead.cloud, cmap='Blues', transform=ccrs.PlateCarree())
-    cbar = fig.colorbar(im, ax=ax)
-    cbar.ax.tick_params(labelsize=17)
+    if plot_leads:
+        lead_plot(grid, lead, fig, ax)
 
     # plot variable data with colorbar
     if variable:
         if isinstance(variable, list):
             for v in variable:
                 msl_plot(date, fig, ax, v)
+                file_name = v + '_' + file_name
+                title += ', ' + v
         else:
             msl_plot(date, fig, ax, variable)
-        # era5_plot(date, fig, ax, 'Oranges_r', extent)
+            file_name = variable + '_' + file_name
+            title += ', ' + variable
 
     # Show/Save the figure
+    ax.set_title(title, size=17)
+    file_name += '.png'
+    file_name = './plots/' + file_name
     show_plot(fig, file_name, show)
 
 
@@ -90,10 +90,19 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False, ms
     show_plot(fig, file_name, show)
 
 
+def lead_plot(grid, lead, fig, ax):
+    im = ax.pcolormesh(grid.lon, grid.lat, 100 * lead.lead_data, cmap='cool', transform=ccrs.PlateCarree())
+    ax.pcolormesh(grid.lon, grid.lat, lead.water, cmap='coolwarm', transform=ccrs.PlateCarree())
+    ax.pcolormesh(grid.lon, grid.lat, lead.land, cmap='twilight', transform=ccrs.PlateCarree())
+    ax.pcolormesh(grid.lon, grid.lat, lead.cloud, cmap='Blues', transform=ccrs.PlateCarree())
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.ax.tick_params(labelsize=17)
+
+
 def msl_plot(date, fig, ax, variable):
     # Plots contour lines of mean sea level air pressure.
     contour_plot = {'msl': True, 'u10': False, 't2m': False, 'cyclone_occurence': False}
-    cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'u10': 'viridis', 't2m': 'coolwarm'}
+    cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'u10': 'twilight_shifted', 't2m': 'coolwarm'}
     alpha_dict = {'msl': 1, 'cyclone_occurence': .1, 'u10': 1, 't2m': 1}
     data_set = leads.Era5(variable)
 
@@ -104,7 +113,9 @@ def msl_plot(date, fig, ax, variable):
     else:
         im = ax.pcolormesh(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=cmap_dict[variable],
                       alpha=alpha_dict[variable], transform=ccrs.PlateCarree())
-
+        im.set_clim(-25, 25)
+        cbar = fig.colorbar(im, ax=ax)
+        cbar.ax.tick_params(labelsize=17)
 
 
 def era5_plot(date, fig, ax, cmap, extent):
@@ -115,16 +126,18 @@ def era5_plot(date, fig, ax, cmap, extent):
     ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
 
 
-def plots_for_case(case, path_dir, extent=None):
+def plots_for_case(case, path_dir, extent=None, var=None, plot_lead=True, diff=False):
     for i, date in enumerate(case):
         file_name = path_dir + f'/{date}'
         print(f'Working on plots for date:{date}')
-        regional_lead_plot(date, extent=extent, file_name=file_name)
-        try:
-            file_name = path_dir + f'/diff-{case[i]}-{case[i + 1]}'
-            two_lead_diff_plot(case[i], case[i + 1], extent=extent, file_name=file_name)
-        except IndexError:
-            pass
+        regional_lead_plot(date, extent=extent, variable=var, plot_leads=plot_lead)
+
+        if diff:
+            try:
+                file_name = path_dir + f'/diff-{case[i]}-{case[i + 1]}'
+                two_lead_diff_plot(case[i], case[i + 1], extent=extent, file_name=file_name)
+            except IndexError:
+                pass
 
 
 if __name__ == '__main__':
@@ -138,5 +151,5 @@ if __name__ == '__main__':
     extent4 = None
     path = './plots/case1'
 
-    # plots_for_case(case1, path, extent1)
-    regional_lead_plot('20200219', show=True, variable=['msl', 'u10'])
+    plots_for_case(case2, path, extent2, ['msl', 't2m'], plot_lead=False)
+    # regional_lead_plot('20200101', show=False, variable=['msl', 'u10'], plot_leads=False)
