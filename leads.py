@@ -127,7 +127,7 @@ class Era5Regrid:
         # import air pressure data
         variable_dict = {'variable': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_2020_Wind_regrid_bil.nc',
                          't2m': 'data/ERA5_2020_T2m_regrid_bil.nc',
-                         'track': 'data/Cyclone_Occurence_all_2019_2020_new_regrid_bil.nc'}
+                         'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new_regrid_bil.nc'}
 
         path = variable_dict[variable]
         self.lead = lead
@@ -137,31 +137,29 @@ class Era5Regrid:
         self.time = data_set['time']
         self.lon = np.reshape(data_set.variables['lon'], self.shape)
         self.lat = np.reshape(data_set.variables['lat'], self.shape)
-        self.msl = data_set.variables['variable']
+        self.variable = data_set.variables[variable]
 
         self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
         self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
 
-    def get_time(self, date):
+    def get_msl(self, date):
         d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
         d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
-        return cftime.date2index([d1, d2], self.time)
-
-    def get_msl(self, date):
-        t1, t2 = self.get_time(date)
+        t1, t2 = cftime.date2index([d1, d2], self.time)
 
         new_shape = self.lon.shape
-        mean_msl = np.zeros(new_shape)
+        mean_variable = np.zeros(new_shape)
         for t in range(t1, t2 + 1):
-            add_msl = np.reshape(self.msl[t], self.shape)
+            add_msl = np.reshape(self.variable[t], self.shape)
             add_msl = ds.clear_matrix(add_msl, self.lead.del_row, self.lead.del_col)
-            mean_msl += add_msl
-        return .0025 * mean_msl
+            mean_variable += add_msl
+        return mean_variable
 
 
 if __name__ == '__main__':
-    measurement = Era5('t2m')
-    print(measurement.get_variable('20200217'))
+    measurement = Era5Regrid(Lead('20200101'), 'cyclone_occurence')
+    measure = measurement.get_msl('20200101')
+    print(measure)
 
 
 

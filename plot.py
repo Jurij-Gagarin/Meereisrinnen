@@ -112,18 +112,20 @@ def msl_plot(date, fig, ax, variable):
         ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
     else:
         im = ax.pcolormesh(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=cmap_dict[variable],
-                      alpha=alpha_dict[variable], transform=ccrs.PlateCarree())
+                           alpha=alpha_dict[variable], transform=ccrs.PlateCarree())
         im.set_clim(-25, 25)
         cbar = fig.colorbar(im, ax=ax)
         cbar.ax.tick_params(labelsize=17)
 
 
+'''
 def era5_plot(date, fig, ax, cmap, extent):
     # Era5 Dataset is typically not used for plotting. This function might be removed in the near future
     data_set = leads.Era5Regrid(leads.Lead(date), 'variable')
     contours = ax.contour(data_set.lon, data_set.lat, data_set.get_msl(date), cmap=cmap,
                           transform=ccrs.PlateCarree(), levels=15)
     ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
+'''
 
 
 def plots_for_case(case, path_dir, extent=None, var=None, plot_lead=True, diff=False):

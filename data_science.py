@@ -36,6 +36,9 @@ def variable_manip(var, matrix):
     elif var == 't2m':
         return matrix
 
+def cyclone_analysis():
+    pass
+
 
 if __name__ == '__main__':
     print('Hallo' + '!')
