@@ -43,11 +43,11 @@ def regional_lead_plot(date, extent=None, show=False, variable=None, plot_leads=
     if variable:
         if isinstance(variable, list):
             for v in variable:
-                msl_plot(date, fig, ax, v)
+                variable_plot(date, fig, ax, v)
                 file_name = v + '_' + file_name
                 title += ', ' + v
         else:
-            msl_plot(date, fig, ax, variable)
+            variable_plot(date, fig, ax, variable)
             file_name = variable + '_' + file_name
             title += ', ' + variable
 
@@ -84,7 +84,7 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False, ms
 
     # plot variable
     if msl:
-        msl_plot(date2, fig, ax, 'summer', 'variable')
+        variable_plot(date2, fig, ax, 'summer')
 
     # Show/Save the figure
     show_plot(fig, file_name, show)
@@ -99,12 +99,13 @@ def lead_plot(grid, lead, fig, ax):
     cbar.ax.tick_params(labelsize=17)
 
 
-def msl_plot(date, fig, ax, variable):
+def variable_plot(date, fig, ax, variable):
     # Plots contour lines of mean sea level air pressure.
     contour_plot = {'msl': True, 'u10': False, 't2m': False, 'cyclone_occurence': False}
     cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'u10': 'twilight_shifted', 't2m': 'coolwarm'}
     alpha_dict = {'msl': 1, 'cyclone_occurence': .1, 'u10': 1, 't2m': 1}
-    data_set = leads.Era5(variable)
+    # data_set = leads.Era5(variable)
+    data_set = leads.Era5Regrid(leads.Lead(date), variable)
 
     if contour_plot[variable]:
         contours = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=cmap_dict[variable],
@@ -113,7 +114,7 @@ def msl_plot(date, fig, ax, variable):
     else:
         im = ax.pcolormesh(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=cmap_dict[variable],
                            alpha=alpha_dict[variable], transform=ccrs.PlateCarree())
-        im.set_clim(-25, 25)
+        # im.set_clim(-25, 25)
         cbar = fig.colorbar(im, ax=ax)
         cbar.ax.tick_params(labelsize=17)
 
@@ -128,16 +129,14 @@ def era5_plot(date, fig, ax, cmap, extent):
 '''
 
 
-def plots_for_case(case, path_dir, extent=None, var=None, plot_lead=True, diff=False):
+def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
     for i, date in enumerate(case):
-        file_name = path_dir + f'/{date}'
         print(f'Working on plots for date:{date}')
         regional_lead_plot(date, extent=extent, variable=var, plot_leads=plot_lead)
 
         if diff:
             try:
-                file_name = path_dir + f'/diff-{case[i]}-{case[i + 1]}'
-                two_lead_diff_plot(case[i], case[i + 1], extent=extent, file_name=file_name)
+                two_lead_diff_plot(case[i], case[i + 1], extent=extent)
             except IndexError:
                 pass
 
@@ -153,5 +152,5 @@ if __name__ == '__main__':
     extent4 = None
     path = './plots/case1'
 
-    plots_for_case(case2, path, extent2, ['msl', 't2m'], plot_lead=False)
-    # regional_lead_plot('20200101', show=False, variable=['msl', 'u10'], plot_leads=False)
+    # plots_for_case(case2, extent2, ['msl', 't2m'], plot_lead=False)
+    regional_lead_plot('20200219', show=False, variable=['cyclone_occurence', 'msl'], plot_leads=True)

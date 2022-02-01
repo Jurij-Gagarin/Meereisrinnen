@@ -36,9 +36,10 @@ def variable_manip(var, matrix):
     elif var == 't2m':
         return matrix
 
-def cyclone_analysis():
-    pass
 
+def cyclone_analysis():
+    dates = ['202001' + str(d).zfill(2) for d in list(range(1, 6))]
+    print(dates)
 
 if __name__ == '__main__':
-    print('Hallo' + '!')
+    cyclone_analysis()

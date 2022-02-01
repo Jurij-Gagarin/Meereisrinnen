@@ -125,11 +125,12 @@ class Era5:
 class Era5Regrid:
     def __init__(self, lead, variable):
         # import air pressure data
-        variable_dict = {'variable': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_2020_Wind_regrid_bil.nc',
+        variable_dict = {'msl': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_2020_Wind_regrid_bil.nc',
                          't2m': 'data/ERA5_2020_T2m_regrid_bil.nc',
                          'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new_regrid_bil.nc'}
 
-        path = variable_dict[variable]
+        self.var = variable
+        path = variable_dict[self.var]
         self.lead = lead
 
         data_set = nc.Dataset(path)
@@ -137,12 +138,12 @@ class Era5Regrid:
         self.time = data_set['time']
         self.lon = np.reshape(data_set.variables['lon'], self.shape)
         self.lat = np.reshape(data_set.variables['lat'], self.shape)
-        self.variable = data_set.variables[variable]
+        self.variable = data_set.variables[self.var]
 
         self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
         self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
 
-    def get_msl(self, date):
+    def get_variable(self, date):
         d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
         d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
         t1, t2 = cftime.date2index([d1, d2], self.time)
@@ -153,12 +154,12 @@ class Era5Regrid:
             add_msl = np.reshape(self.variable[t], self.shape)
             add_msl = ds.clear_matrix(add_msl, self.lead.del_row, self.lead.del_col)
             mean_variable += add_msl
-        return mean_variable
+        return ds.variable_manip(self.var, .25 * mean_variable)
 
 
 if __name__ == '__main__':
     measurement = Era5Regrid(Lead('20200101'), 'cyclone_occurence')
-    measure = measurement.get_msl('20200101')
+    measure = measurement.get_variable('20200101')
     print(measure)
 
 
