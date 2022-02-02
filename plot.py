@@ -104,8 +104,8 @@ def variable_plot(date, fig, ax, variable):
     contour_plot = {'msl': True, 'u10': False, 't2m': False, 'cyclone_occurence': False}
     cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'u10': 'twilight_shifted', 't2m': 'coolwarm'}
     alpha_dict = {'msl': 1, 'cyclone_occurence': .1, 'u10': 1, 't2m': 1}
-    # data_set = leads.Era5(variable)
-    data_set = leads.Era5Regrid(leads.Lead(date), variable)
+    data_set = leads.Era5(variable)
+    # data_set = leads.Era5Regrid(leads.Lead(date), variable)
 
     if contour_plot[variable]:
         contours = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=cmap_dict[variable],
@@ -152,5 +152,8 @@ if __name__ == '__main__':
     extent4 = None
     path = './plots/case1'
 
-    # plots_for_case(case2, extent2, ['msl', 't2m'], plot_lead=False)
-    regional_lead_plot('20200219', show=False, variable=['cyclone_occurence', 'msl'], plot_leads=True)
+    # plots_for_case(case1, extent1, ['cyclone_occurence', 'msl'], plot_lead=True)
+    plots_for_case(case2, extent2, ['cyclone_occurence', 'msl'], plot_lead=True)
+    plots_for_case(case3, extent3, ['cyclone_occurence', 'msl'], plot_lead=True)
+    plots_for_case(case4, extent4, ['cyclone_occurence', 'msl'], plot_lead=True)
+    #regional_lead_plot('20200221', show=False, variable=['cyclone_occurence', 'msl'], plot_leads=True)

@@ -1,5 +1,6 @@
 import leads
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def compare_nan(arr1, arr2):
@@ -38,8 +39,23 @@ def variable_manip(var, matrix):
 
 
 def cyclone_analysis():
-    dates = ['202001' + str(d).zfill(2) for d in list(range(1, 6))]
-    print(dates)
+    co = 'cyclone_occurence'
+    dates = ['202002' + str(d).zfill(2) for d in list(range(19, 20))]
+    lead_dummy = leads.Lead('20200101')
+    cyclone_cells = np.array([])
+    non_cyclone_cells = np.array([])
+    for date in dates:
+        lead_fraction = leads.Lead(date).lead_data
+        mask = leads.Era5Regrid(lead_dummy, co).get_variable(date) == 1
+        cyclone_cells = np.hstack([cyclone_cells, lead_fraction[mask]])
+        non_cyclone_cells = np.hstack([non_cyclone_cells, lead_fraction[~mask]])
+
+    a = non_cyclone_cells[~np.isnan(non_cyclone_cells)]
+    b = cyclone_cells[~np.isnan(cyclone_cells)]
+    plt.hist(a, alpha=.5, bins=100, density=True)
+    plt.hist(b, alpha=.5, bins=100, density=True)
+    plt.show()
+
 
 if __name__ == '__main__':
     cyclone_analysis()
