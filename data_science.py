@@ -29,7 +29,7 @@ def clear_matrix(matrix, rows, cols):
 
 def variable_manip(var, matrix):
     if var == 'cyclone_occurence':
-        return np.ceil(matrix)
+        return matrix
     elif var == 'msl':
         return .01 * matrix
     elif var == 'u10':
@@ -40,8 +40,8 @@ def variable_manip(var, matrix):
 
 def cyclone_analysis():
     co = 'cyclone_occurence'
-    dates = ['202002' + str(d).zfill(2) for d in list(range(19, 20))]
-    lead_dummy = leads.Lead('20200101')
+    dates = ['202002' + str(d).zfill(2) for d in list(range(19, 22))]
+    lead_dummy = leads.Lead('20200220')
     cyclone_cells = np.array([])
     non_cyclone_cells = np.array([])
     for date in dates:
