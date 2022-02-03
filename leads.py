@@ -7,7 +7,7 @@ import numpy as np
 
 
 class Lead:
-    def __init__(self, date):
+    def __init__(self, date, area='global'):
         # import lead fraction data
         self.date = date
         path = f'./data/{self.date}.nc'
@@ -72,7 +72,8 @@ class Lead:
 
 
 class CoordinateGrid:
-    def __init__(self, lead):
+    def __init__(self):
+        lead = Lead('20200101')
         # import corresponding coordinates
         path_grid = './data/LatLonGrid.nc'
         ds_latlon = nc.Dataset(path_grid)
@@ -91,7 +92,7 @@ class Era5:
     def __init__(self, variable):
         # import air pressure data
         self.var = variable
-        variable_dict = {'msl': 'data/ERA5_MSLP_2020_JanApr.nc', 'u10': 'data/ERA5_Wind_2020_JanApr.nc',
+        variable_dict = {'msl': 'data/ERA5_MSLP_2020_JanApr.nc', 'wind': 'data/ERA5_Wind_2020_JanApr.nc',
                          't2m': 'data/ERA5_T2m_2020_JanApr.nc',
                          'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new.nc'}
 
@@ -101,7 +102,6 @@ class Era5:
         # Assign variables
         self.variable = data_set.variables[self.var]
         self.time = data_set['time']
-        # print(self.variable[210])
 
         # Build grid matrix
         self.lon = np.tile(data_set['longitude'][:], (161, 1))
@@ -117,7 +117,6 @@ class Era5:
         # Calculate mean variable of the given date
         mean_var = np.zeros(self.variable[0].shape)
         for t in range(t1, t2 + 1):
-            print(t)
             mean_var = np.add(mean_var, self.variable[t])
         return ds.variable_manip(self.var, .25 * mean_var)
 
@@ -158,10 +157,7 @@ class Era5Regrid:
 
 
 if __name__ == '__main__':
-    measurement = Era5Regrid(Lead('20200101'), 'cyclone_occurence')
-    measure = measurement.get_variable('20200101')
-    print(measure)
-
+    pass
 
 
 

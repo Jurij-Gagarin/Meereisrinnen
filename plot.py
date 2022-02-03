@@ -20,7 +20,7 @@ def setup_plot(extent):
 def show_plot(fig, file_name, show):
     if show:
         plt.show()
-    plt.savefig(file_name)
+    plt.savefig(file_name, transparent=True)
     plt.close(fig)
 
 
@@ -29,7 +29,7 @@ def regional_lead_plot(date, extent=None, show=False, variable=None, plot_leads=
 
     # setup data
     lead = leads.Lead(date)
-    grid = leads.CoordinateGrid(lead)
+    grid = leads.CoordinateGrid()
 
     # setup plot
     fig, ax = setup_plot(extent)
@@ -95,15 +95,17 @@ def lead_plot(grid, lead, fig, ax):
     ax.pcolormesh(grid.lon, grid.lat, lead.water, cmap='coolwarm', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.land, cmap='twilight', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.cloud, cmap='Blues', transform=ccrs.PlateCarree())
+    # lon, lat, area = ds.select_area(grid, lead, np.ones(grid.lat.shape))
+    # ax.pcolormesh(lon, lat, area, transform=ccrs.PlateCarree())
     cbar = fig.colorbar(im, ax=ax)
     cbar.ax.tick_params(labelsize=17)
 
 
 def variable_plot(date, fig, ax, variable):
     # Plots contour lines of mean sea level air pressure.
-    contour_plot = {'msl': True, 'u10': False, 't2m': False, 'cyclone_occurence': False}
-    cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'u10': 'twilight_shifted', 't2m': 'coolwarm'}
-    alpha_dict = {'msl': 1, 'cyclone_occurence': .1, 'u10': 1, 't2m': 1}
+    contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False}
+    cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'wind': 'cividis', 't2m': 'coolwarm'}
+    alpha_dict = {'msl': 1, 'cyclone_occurence': .1, 'wind': 1, 't2m': 1}
     data_set = leads.Era5(variable)
     # data_set = leads.Era5Regrid(leads.Lead(date), variable)
 
@@ -114,19 +116,9 @@ def variable_plot(date, fig, ax, variable):
     else:
         im = ax.pcolormesh(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=cmap_dict[variable],
                            alpha=alpha_dict[variable], transform=ccrs.PlateCarree())
-        # im.set_clim(-25, 25)
+        # im.set_clim(0, 25)
         cbar = fig.colorbar(im, ax=ax)
         cbar.ax.tick_params(labelsize=17)
-
-
-'''
-def era5_plot(date, fig, ax, cmap, extent):
-    # Era5 Dataset is typically not used for plotting. This function might be removed in the near future
-    data_set = leads.Era5Regrid(leads.Lead(date), 'variable')
-    contours = ax.contour(data_set.lon, data_set.lat, data_set.get_msl(date), cmap=cmap,
-                          transform=ccrs.PlateCarree(), levels=15)
-    ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
-'''
 
 
 def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
@@ -152,8 +144,7 @@ if __name__ == '__main__':
     extent4 = None
     path = './plots/case1'
 
-    # plots_for_case(case1, extent1, ['cyclone_occurence', 'msl'], plot_lead=True)
-    plots_for_case(case2, extent2, ['cyclone_occurence', 'msl'], plot_lead=True)
-    plots_for_case(case3, extent3, ['cyclone_occurence', 'msl'], plot_lead=True)
-    plots_for_case(case4, extent4, ['cyclone_occurence', 'msl'], plot_lead=True)
-    #regional_lead_plot('20200221', show=False, variable=['cyclone_occurence', 'msl'], plot_leads=True)
+    regional_lead_plot('20200221', show=True, variable=None, plot_leads=True)
+
+    # plots_for_case(case1, extent1, ['wind', 'msl'],  plot_lead=False)
+    # plots_for_case(case1, extent1, ['cyclone_occurence', 'msl'],  plot_lead=False)

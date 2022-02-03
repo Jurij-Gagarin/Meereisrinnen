@@ -28,34 +28,33 @@ def clear_matrix(matrix, rows, cols):
 
 
 def variable_manip(var, matrix):
-    if var == 'cyclone_occurence':
-        return matrix
-    elif var == 'msl':
+    if var == 'msl':
         return .01 * matrix
-    elif var == 'u10':
-        return matrix
-    elif var == 't2m':
+    else:
         return matrix
 
 
-def cyclone_analysis():
-    co = 'cyclone_occurence'
-    dates = ['202002' + str(d).zfill(2) for d in list(range(19, 22))]
-    lead_dummy = leads.Lead('20200220')
-    cyclone_cells = np.array([])
-    non_cyclone_cells = np.array([])
-    for date in dates:
-        lead_fraction = leads.Lead(date).lead_data
-        mask = leads.Era5Regrid(lead_dummy, co).get_variable(date) == 1
-        cyclone_cells = np.hstack([cyclone_cells, lead_fraction[mask]])
-        non_cyclone_cells = np.hstack([non_cyclone_cells, lead_fraction[~mask]])
-
-    a = non_cyclone_cells[~np.isnan(non_cyclone_cells)]
-    b = cyclone_cells[~np.isnan(cyclone_cells)]
-    plt.hist(a, alpha=.5, bins=100, density=True)
-    plt.hist(b, alpha=.5, bins=100, density=True)
-    plt.show()
+def select_area(grid, lead, matrix, points=(90, -30, 85, 70)):
+    lat = grid.lat
+    lon = grid.lon
+    mask_lat_a = lat >= points[3]
+    mask_lat_b = lat <= points[2]
+    mask_lon_a = lon <= points[0]
+    mask_lon_b = lon >= points[1]
+    mask_water = np.isnan(lead.water)
+    mask_land = np.isnan(lead.land)
+    mask_cloud = np.isnan(lead.cloud)
+    mask = mask_lon_a & mask_lat_b & mask_lat_a & mask_lon_b & mask_land & mask_water & mask_cloud
+    #lon[mask == False] = 100
+    #lat[mask == False] = 100
+    matrix[mask == False] = None
+    #plt.imshow(matrix)
+    #plt.show()
+    print(mask)
+    print(type(matrix))
+    print(matrix)
+    return lon, lat, matrix
 
 
 if __name__ == '__main__':
-    cyclone_analysis()
+    select_area(leads.CoordinateGrid(), leads.Lead('20200217'), np.ones(leads.CoordinateGrid().lat.shape))
