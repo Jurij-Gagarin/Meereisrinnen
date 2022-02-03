@@ -34,7 +34,7 @@ def variable_manip(var, matrix):
         return matrix
 
 
-def select_area(grid, lead, matrix, points=(90, -30, 85, 70)):
+def select_area(grid, lead, matrix, points=(90, 0, 90, 70)):
     lat = grid.lat
     lon = grid.lon
     mask_lat_a = lat >= points[3]
@@ -45,16 +45,46 @@ def select_area(grid, lead, matrix, points=(90, -30, 85, 70)):
     mask_land = np.isnan(lead.land)
     mask_cloud = np.isnan(lead.cloud)
     mask = mask_lon_a & mask_lat_b & mask_lat_a & mask_lon_b & mask_land & mask_water & mask_cloud
-    #lon[mask == False] = 100
-    #lat[mask == False] = 100
     matrix[mask == False] = None
-    #plt.imshow(matrix)
-    #plt.show()
-    print(mask)
-    print(type(matrix))
-    print(matrix)
+
     return lon, lat, matrix
 
 
+def cyclone_trace():
+    pass
+
+
+def lead_hist(date):
+    lead = leads.Lead(date)
+    grid = leads.CoordinateGrid()
+    lead_data = lead.lead_data
+    cyclone = leads.Era5Regrid(lead, 'cyclone_occurence').get_variable(date)
+
+    lead_data = select_area(grid, lead, lead_data)[2]
+    cyclone = select_area(grid, lead, cyclone)[2]
+    #plt.imshow(cyclone)
+
+    for i in [0, .5, 1]:
+        mask = cyclone == i
+        print(lead_data[mask], len(lead_data[mask]))
+        plt.hist(lead_data[mask], density=True, bins=100, alpha=.25, label=f'{i}, {np.mean(lead_data[mask])}, N={len(lead_data[mask])}')
+    cyclone = np.ceil(cyclone)
+    mask = cyclone == 1
+    plt.hist(lead_data[mask], density=True, bins=20, alpha=.25, label=f'ceil, {np.mean(lead_data[mask])}, N={len(lead_data[mask])}')
+    plt.legend()
+
+
+    plt.show()
+
+
+
 if __name__ == '__main__':
-    select_area(leads.CoordinateGrid(), leads.Lead('20200217'), np.ones(leads.CoordinateGrid().lat.shape))
+    #lead_hist('20200218')
+    case1 = ['20200216', '20200217', '20200218', '20200219', '20200220', '20200221', '20200222']
+    extent1 = [-70, 100, 65, 90]
+    case2 = ['20200114', '20200115', '20200116', '20200117', '20200118', '20200119', '20200120']
+    extent2 = None
+    case3 = ['20200128', '20200129', '20200130', '20200131', '20200201', '20200202', '20200203']
+    extent3 = None
+    case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
+    extent4 = None
