@@ -3,6 +3,7 @@ import cartopy.crs as ccrs
 import leads
 import data_science as ds
 import numpy as np
+import scipy.optimize as opt
 
 
 def setup_plot(extent):
@@ -20,7 +21,7 @@ def setup_plot(extent):
 def show_plot(fig, file_name, show):
     if show:
         plt.show()
-    plt.savefig(file_name, transparent=True)
+    plt.savefig(file_name)
     plt.close(fig)
 
 
@@ -105,7 +106,7 @@ def variable_plot(date, fig, ax, variable):
     # Plots contour lines of mean sea level air pressure.
     contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False}
     cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'wind': 'cividis', 't2m': 'coolwarm'}
-    alpha_dict = {'msl': 1, 'cyclone_occurence': .1, 'wind': 1, 't2m': 1}
+    alpha_dict = {'msl': 1, 'cyclone_occurence': .25, 'wind': 1, 't2m': 1}
     data_set = leads.Era5(variable)
     # data_set = leads.Era5Regrid(leads.Lead(date), variable)
 
@@ -119,6 +120,30 @@ def variable_plot(date, fig, ax, variable):
         # im.set_clim(0, 25)
         cbar = fig.colorbar(im, ax=ax)
         cbar.ax.tick_params(labelsize=17)
+
+
+def matrix_plot(matrix, extent=None):
+    fig, ax = setup_plot(extent)
+    grid = leads.CoordinateGrid()
+    # im = ax.pcolormesh(grid.lon, grid.lat, matrix, cmap='RdYlGn', transform=ccrs.PlateCarree())
+    im = ax.pcolormesh(grid.lon, grid.lat, matrix, cmap='bwr', transform=ccrs.PlateCarree())
+    im.set_clim(-.6, .6)
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.ax.tick_params(labelsize=17)
+    plt.show()
+
+
+def quantify(lead_diff, cyc_diff):
+    lead_diff.flatten()
+    mask = np.isnan(lead_diff)
+    cyc_diff.flatten()
+    lead_diff = lead_diff[~mask]
+    cyc_diff = cyc_diff[~mask]
+    plt.scatter(cyc_diff, lead_diff, s=1)
+    fit = lambda x, a: a * x
+    pars, cov = opt.curve_fit(fit, cyc_diff, lead_diff)
+    plt.plot(cyc_diff, [fit(x, pars[0]) for x in cyc_diff])
+    plt.show()
 
 
 def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
@@ -135,16 +160,38 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
 
 if __name__ == '__main__':
     case1 = ['20200216', '20200217', '20200218', '20200219', '20200220', '20200221', '20200222']
-    extent1 = [-70, 100, 65, 90]
+    extent1 = (80, -20, 90, 70)
     case2 = ['20200114', '20200115', '20200116', '20200117', '20200118', '20200119', '20200120']
-    extent2 = None
+    extent2 = [80, -20, 90, 70]
     case3 = ['20200128', '20200129', '20200130', '20200131', '20200201', '20200202', '20200203']
-    extent3 = None
+    extent3 = [70, -10, 90, 70]
     case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
-    extent4 = None
+    extent4 = [70, -10, 90, 70]
     path = './plots/case1'
 
-    regional_lead_plot('20200221', show=True, variable=None, plot_leads=True)
+    # regional_lead_plot('20200221', show=True, variable=None, plot_leads=True)
 
+    extent = [-10, 70, 70, 90]
+    # matrix_plot(ds.cyclone_trace('20200308', '20200316'), extent)
+    # matrix_plot(ds.cyclone_trace('20200227', '20200307'), extent)
+    # plots_for_case(case1, extent1, ['cyclone_occurence', 'msl'], True)
+
+    # lead_diff = ds.lead_average('20200114', '20200117') - ds.lead_average('20200110', '20200113') #case2
+    # cyc_diff = ds.cyclone_trace('20200114', '20200117') - ds.cyclone_trace('20200110', '20200113') #case2
+    # lead_diff = ds.lead_average('20200218', '20200220') - ds.lead_average('20200212', '20200216') #case1
+    # cyc_diff = ds.cyclone_trace('20200218', '20200220', extent) - ds.cyclone_trace('20200212', '20200216', extent) #case1
+    # lead_diff = ds.lead_average('20200131', '20200203') - ds.lead_average('20200126', '20200130') #case3
+    # cyc_diff = ds.cyclone_trace('20200131', '20200203') - ds.cyclone_trace('20200126', '20200130') #case3
+    # lead_diff = ds.lead_average('20200308', '20200316') - ds.lead_average('20200227', '20200307') #case4
+    # cyc_diff = ds.cyclone_trace('20200308', '20200316') - ds.cyclone_trace('20200317', '20200325') #case4
+
+    lead_test = ds.lead_average('20200217', '20200221', extent1) - .5*(ds.lead_average('20200201', '20200216', extent1) + ds.lead_average('20200222', '20200229', extent1))
+    cyc_test = ds.cyclone_trace('20200217', '20200221') - .5*(ds.cyclone_trace('20200201', '20200216') + ds.cyclone_trace('20200222', '20200229'))
+
+    matrix_plot(lead_test, None)
+    quantify(lead_test, cyc_test)
+
+    # matrix_plot(ds.lead_average('20200210', '20200215'), extent)
+    # matrix_plot(ds.lead_average('20200217', '20200221'), extent)
     # plots_for_case(case1, extent1, ['wind', 'msl'],  plot_lead=False)
     # plots_for_case(case1, extent1, ['cyclone_occurence', 'msl'],  plot_lead=False)

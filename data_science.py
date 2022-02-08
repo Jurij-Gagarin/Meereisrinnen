@@ -1,6 +1,23 @@
 import leads
 import numpy as np
 import matplotlib.pyplot as plt
+from datetime import date, timedelta
+import scipy
+import scipy.ndimage
+
+
+def time_delta(date1, date2):
+    days = []
+    start_date = date(int(date1[:4]), int(date1[4:6]), int(date1[6:]))
+    end_date = date(int(date2[:4]), int(date2[4:6]), int(date2[6:]))
+
+    delta = end_date - start_date   # returns timedelta
+
+    for i in range(delta.days + 1):
+        day = str(start_date + timedelta(days=i))
+        days.append(''.join(c for c in day if c not in '-'))
+
+    return days
 
 
 def compare_nan(arr1, arr2):
@@ -12,6 +29,14 @@ def compare_nan(arr1, arr2):
     arr[arr == 0] = np.nan
     arr[~np.isnan(arr)] = 1
     return arr
+
+
+def sum_nan_arrays(arr1, arr2):
+    # Returns arr1 + arr2 element wise. If one element is NaN it's treated like 0. If both elements are Nan, the return
+    # is Nan as well.
+    ma = np.isnan(arr1)
+    mb = np.isnan(arr2)
+    return np.where(ma & mb, np.nan, np.where(ma, 0, arr1) + np.where(mb, 0, arr2))
 
 
 def two_lead_diff(lead1, lead2):
@@ -34,7 +59,7 @@ def variable_manip(var, matrix):
         return matrix
 
 
-def select_area(grid, lead, matrix, points=(90, 0, 90, 70)):
+def select_area(grid, lead, matrix, points=(80, -20, 90, 70)):
     lat = grid.lat
     lon = grid.lon
     mask_lat_a = lat >= points[3]
@@ -50,9 +75,37 @@ def select_area(grid, lead, matrix, points=(90, 0, 90, 70)):
     return lon, lat, matrix
 
 
-def cyclone_trace():
-    pass
+def cyclone_trace(date1, date2):
+    dates = time_delta(date1, date2)
+    grid = leads.CoordinateGrid()
+    cum_cyclone = np.full(grid.lon.shape, np.nan)
+    N = len(dates)
 
+    for date in dates:
+        lead = leads.Lead(date)
+        cyclone = leads.Era5Regrid(lead, 'cyclone_occurence')
+        cyclone = cyclone.get_variable(date)
+        #cyclone = select_area(grid, lead, cyclone)[2]
+        cum_cyclone = sum_nan_arrays(cum_cyclone, cyclone)
+    cum_cyclone = cum_cyclone/N
+    #cum_cyclone = scipy.ndimage.filters.gaussian_filter(cum_cyclone, [1.0, 1.0], mode='constant', order=0)
+    return cum_cyclone
+
+
+def lead_average(date1, date2, extent):
+    dates = time_delta(date1, date2)
+    grid = leads.CoordinateGrid()
+    cum_leads = np.full(grid.lon.shape, np.nan)
+    N = len(dates)
+
+    for date in dates:
+        lead = leads.Lead(date)
+        lead = select_area(grid, lead, lead.lead_data, extent)[2]
+        cum_leads = sum_nan_arrays(cum_leads, lead)
+
+    cum_leads = cum_leads/N
+    #cum_leads = scipy.ndimage.filters.gaussian_filter(cum_leads, [1.0, 1.0], mode='constant', order=0)
+    return cum_leads
 
 def lead_hist(date):
     lead = leads.Lead(date)
@@ -81,10 +134,15 @@ def lead_hist(date):
 if __name__ == '__main__':
     #lead_hist('20200218')
     case1 = ['20200216', '20200217', '20200218', '20200219', '20200220', '20200221', '20200222']
-    extent1 = [-70, 100, 65, 90]
+    extent1 = [-90, 100, 65, 90]
     case2 = ['20200114', '20200115', '20200116', '20200117', '20200118', '20200119', '20200120']
     extent2 = None
     case3 = ['20200128', '20200129', '20200130', '20200131', '20200201', '20200202', '20200203']
     extent3 = None
     case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
     extent4 = None
+
+    #lead_average('20200101', '20200228')
+
+    print(np.full((3,2), np.nan))
+
