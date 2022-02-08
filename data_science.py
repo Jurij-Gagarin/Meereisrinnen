@@ -7,6 +7,7 @@ import scipy.ndimage
 
 
 def time_delta(date1, date2):
+    # Returns a string that contains all dates between date1 and date2 in a '20200101.nc' way.
     days = []
     start_date = date(int(date1[:4]), int(date1[4:6]), int(date1[6:]))
     end_date = date(int(date2[:4]), int(date2[4:6]), int(date2[6:]))
@@ -40,6 +41,7 @@ def sum_nan_arrays(arr1, arr2):
 
 
 def two_lead_diff(lead1, lead2):
+    # Used to calculate day to day difference in the lead fraction
     lead2.lead_data = lead2.lead_data - lead1.lead_data
     lead2.cloud = compare_nan(lead1.cloud, lead2.cloud)
     lead2.water = compare_nan(lead1.water, lead2.water)
@@ -53,13 +55,16 @@ def clear_matrix(matrix, rows, cols):
 
 
 def variable_manip(var, matrix):
+    # This method does small manipulations (unit change) to data from Era5 that is stored in a lead fraction like matrix
     if var == 'msl':
         return .01 * matrix
     else:
         return matrix
 
 
-def select_area(grid, lead, matrix, points=(80, -20, 90, 70)):
+def select_area(grid, lead, matrix, points):
+    # The goal of this method is to select data points in a certain area. It picks only matrix elements, where lead
+    # fraction matrix has real enties (not NaN).
     lat = grid.lat
     lon = grid.lon
     mask_lat_a = lat >= points[3]
@@ -75,7 +80,9 @@ def select_area(grid, lead, matrix, points=(80, -20, 90, 70)):
     return lon, lat, matrix
 
 
-def cyclone_trace(date1, date2):
+def cyclone_trace(date1, date2, extent, filter_data=False):
+    # This Method calculates the average of the cyclone_occurence matrix within the range of date1,2.
+    # Optionally the data can be filtered via Gaussian. You may want to set different sigma values
     dates = time_delta(date1, date2)
     grid = leads.CoordinateGrid()
     cum_cyclone = np.full(grid.lon.shape, np.nan)
@@ -85,14 +92,16 @@ def cyclone_trace(date1, date2):
         lead = leads.Lead(date)
         cyclone = leads.Era5Regrid(lead, 'cyclone_occurence')
         cyclone = cyclone.get_variable(date)
-        #cyclone = select_area(grid, lead, cyclone)[2]
+        cyclone = select_area(grid, lead, cyclone, extent)[2]
         cum_cyclone = sum_nan_arrays(cum_cyclone, cyclone)
     cum_cyclone = cum_cyclone/N
-    #cum_cyclone = scipy.ndimage.filters.gaussian_filter(cum_cyclone, [1.0, 1.0], mode='constant', order=0)
+    if filter_data:
+        cum_cyclone = scipy.ndimage.filters.gaussian_filter(cum_cyclone, [1.0, 1.0], mode='constant', order=0)
     return cum_cyclone
 
 
 def lead_average(date1, date2, extent):
+    # This Method calculates the average of the lead data matrix within the range of date1,2.
     dates = time_delta(date1, date2)
     grid = leads.CoordinateGrid()
     cum_leads = np.full(grid.lon.shape, np.nan)
@@ -104,31 +113,7 @@ def lead_average(date1, date2, extent):
         cum_leads = sum_nan_arrays(cum_leads, lead)
 
     cum_leads = cum_leads/N
-    #cum_leads = scipy.ndimage.filters.gaussian_filter(cum_leads, [1.0, 1.0], mode='constant', order=0)
     return cum_leads
-
-def lead_hist(date):
-    lead = leads.Lead(date)
-    grid = leads.CoordinateGrid()
-    lead_data = lead.lead_data
-    cyclone = leads.Era5Regrid(lead, 'cyclone_occurence').get_variable(date)
-
-    lead_data = select_area(grid, lead, lead_data)[2]
-    cyclone = select_area(grid, lead, cyclone)[2]
-    #plt.imshow(cyclone)
-
-    for i in [0, .5, 1]:
-        mask = cyclone == i
-        print(lead_data[mask], len(lead_data[mask]))
-        plt.hist(lead_data[mask], density=True, bins=100, alpha=.25, label=f'{i}, {np.mean(lead_data[mask])}, N={len(lead_data[mask])}')
-    cyclone = np.ceil(cyclone)
-    mask = cyclone == 1
-    plt.hist(lead_data[mask], density=True, bins=20, alpha=.25, label=f'ceil, {np.mean(lead_data[mask])}, N={len(lead_data[mask])}')
-    plt.legend()
-
-
-    plt.show()
-
 
 
 if __name__ == '__main__':
