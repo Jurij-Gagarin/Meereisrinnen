@@ -1,11 +1,9 @@
 import datetime
-
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import leads
 import data_science as ds
 import numpy as np
-import scipy.optimize as opt
 import calendar
 from dateutil.rrule import rrule, MONTHLY
 
@@ -145,26 +143,45 @@ def matrix_plot(date1, date2, variable, cmap='RdYlGn', clim=(None, None), extent
     show_plot(fig, f'./plots/{variable}-{date1}-{date2}.png', show)
 
 
-def variable_avg_sum_daily(date1, date2, extent, variable):
-    fig, ax = plt.subplots()
+def variable_daily_avg(date1, date2, extent, variable):
+    # This returns a narray that contains the daily average values of your variable data.
     dates = ds.time_delta(date1, date2)
-    var_sum = []
-    lead_sum = []
-
-    for date in dates:
+    var_sum = np.zeros(len(dates))
+    for i, date in enumerate(dates):
         print(date)
-        var = ds.variable_average(date, date, extent, variable)
-        var = var[~np.isnan(var)]
-        var_sum.append(np.sum(var) / len(var))
-        lead = ds.lead_average(date, date, extent)
-        lead = lead[~np.isnan(lead)]
-        lead_sum.append(np.sum(lead) / len(lead))
+        if variable == 'leads':
+            var = ds.lead_average(date, date, extent)
+        else:
+            var = ds.variable_average(date, date, extent, variable)
+        var_sum[i] = np.nanmean(var)
+    return var_sum / np.max(var_sum)
 
-    ax.scatter(var_sum, lead_sum, label=f'{variable}')
-    ax.set_xlabel('cyclone occurence')
-    ax.set_ylabel('lead fraction')
-    ax.set_title('Average lead fraction against cyclone occurence daily.')
+
+def variable_avg_sum_daily(date1, date2, extent, variables):
+    # This Plot shows you how the daily averages of two variables correlate with each other.
+    # variables need's to be an iterable that contains the strings, that corresponds to your variable
+    var1 = variable_daily_avg(date1, date2, extent, variables[0])
+    var2 = variable_daily_avg(date1, date2, extent, variables[1])
+
+    fig, ax = plt.subplots()
+    ax.scatter(var1, var2)
+    ax.set_xlabel(f'{variables[0]}')
+    ax.set_ylabel(f'{variables[1]}')
+    ax.set_title(f'Average {variables[0]} against {variables[1]} daily.')
     plt.show()
+
+
+def variables_against_time(date1, date2, extent, variable1, variable2):
+    # This shows you how two variables change with respect to time.
+    dates = ds.time_delta(date1, date2)
+    for date in dates:
+        if variable2 == 'leads':
+            var2 = ds.lead_average(date, date, extent)
+        else:
+            var2 = ds.variable_average(date, date, extent, variable2)
+        var1 = ds.variable_average(date, date, extent, variable1)
+
+
 
 
 
@@ -217,13 +234,13 @@ if __name__ == '__main__':
     extent3 = [70, -10, 90, 70]
     case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
     extent4 = [65, 0, 80, 75]
-    path = './plots/case1'
 
     # regional_lead_plot('20200221', show=True, variable=None, plot_leads=True)
 
     extent = [65, 0, 80, 71]
+    s_extent = [35, 34, 76, 75]
     no_extent = [180, -180, 90, 60]
-    variable_avg_sum_daily('20200210', '20200229', extent, 'cyclone_occurence')
+    variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
 
     #matrix_plot(ds.lead_average('20200112', '20200118', no_extent), extent=no_extent)
     #matrix_plot('20200316', '20200322', 'leads', cmap='inferno', extent=no_extent, show=False)
