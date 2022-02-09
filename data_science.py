@@ -7,7 +7,7 @@ import scipy.ndimage
 
 
 def time_delta(date1, date2):
-    # Returns a string that contains all dates between date1 and date2 in a '20200101.nc' way.
+    # Returns a list that contains all dates between date1 and date2 in a '20200101.nc' way.
     days = []
     start_date = date(int(date1[:4]), int(date1[4:6]), int(date1[6:]))
     end_date = date(int(date2[:4]), int(date2[4:6]), int(date2[6:]))

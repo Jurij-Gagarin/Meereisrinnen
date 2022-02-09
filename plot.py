@@ -145,17 +145,28 @@ def matrix_plot(date1, date2, variable, cmap='RdYlGn', clim=(None, None), extent
     show_plot(fig, f'./plots/{variable}-{date1}-{date2}.png', show)
 
 
-def quantify(lead_diff, cyc_diff):
-    lead_diff.flatten()
-    mask = np.isnan(lead_diff)
-    cyc_diff.flatten()
-    lead_diff = lead_diff[~mask]
-    cyc_diff = cyc_diff[~mask]
-    plt.scatter(cyc_diff, lead_diff, s=1)
-    fit = lambda x, a: a * x
-    pars, cov = opt.curve_fit(fit, cyc_diff, lead_diff)
-    plt.plot(cyc_diff, [fit(x, pars[0]) for x in cyc_diff])
+def variable_avg_sum_daily(date1, date2, extent, variable):
+    fig, ax = plt.subplots()
+    dates = ds.time_delta(date1, date2)
+    var_sum = []
+    lead_sum = []
+
+    for date in dates:
+        print(date)
+        var = ds.variable_average(date, date, extent, variable)
+        var = var[~np.isnan(var)]
+        var_sum.append(np.sum(var) / len(var))
+        lead = ds.lead_average(date, date, extent)
+        lead = lead[~np.isnan(lead)]
+        lead_sum.append(np.sum(lead) / len(lead))
+
+    ax.scatter(var_sum, lead_sum, label=f'{variable}')
+    ax.set_xlabel('cyclone occurence')
+    ax.set_ylabel('lead fraction')
+    ax.set_title('Average lead fraction against cyclone occurence daily.')
     plt.show()
+
+
 
 
 def plot_lead_cyclone_sum_monthly(date1, date2, extent, variable):
@@ -212,7 +223,8 @@ if __name__ == '__main__':
 
     extent = [65, 0, 80, 71]
     no_extent = [180, -180, 90, 60]
+    variable_avg_sum_daily('20200210', '20200229', extent, 'cyclone_occurence')
 
     #matrix_plot(ds.lead_average('20200112', '20200118', no_extent), extent=no_extent)
-    matrix_plot('20200222', '20200226', 'leads', cmap='inferno', extent=no_extent, show=False)
+    #matrix_plot('20200316', '20200322', 'leads', cmap='inferno', extent=no_extent, show=False)
     #plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')
