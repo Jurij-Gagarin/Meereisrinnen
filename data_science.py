@@ -6,6 +6,13 @@ import scipy
 import scipy.ndimage
 
 
+def string_time_to_datetime(dates):
+    if not isinstance(dates, list):
+        return date(int(dates[:4]), int(dates[4:6]), int(dates[6:]))
+    else:
+        return [date(int(d[:4]), int(d[4:6]), int(d[6:])) for d in dates]
+
+
 def time_delta(date1, date2):
     # Returns a list that contains all dates between date1 and date2 in a '20200101.nc' way.
     days = []

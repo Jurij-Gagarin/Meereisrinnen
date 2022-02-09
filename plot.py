@@ -8,6 +8,28 @@ import calendar
 from dateutil.rrule import rrule, MONTHLY
 
 
+class VarOptions:
+    def __init__(self, var):
+        self.var = var
+        # Dictionaries that assign colors, cmaps, ... to certain variables
+        contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False}
+        cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'wind': 'cividis', 't2m': 'coolwarm',
+                     'leads': 'inferno'}
+        alpha_dict = {'msl': 1, 'cyclone_occurence': .25, 'wind': 1, 't2m': 1, 'leads': 1}
+        color_dict = {'msl': 'red', 'leads': 'blue', 'wind': 'orange', 'cyclone_occurence': 'green'}
+        unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K'}
+
+        self.contour = contour_plot[self.var]
+        self.cmap = cmap_dict[self.var]
+        self.alpha = alpha_dict[self.var]
+        self.color = color_dict[self.var]
+        self.unit = unit_dict[self.var]
+
+    def label(self, extra_label=''):
+        return f'{self.var} in {self.unit}' + extra_label
+
+
+
 def setup_plot(extent):
     # create figure and base map
     fig, ax = plt.subplots(figsize=(15, 10))
@@ -154,7 +176,7 @@ def variable_daily_avg(date1, date2, extent, variable):
         else:
             var = ds.variable_average(date, date, extent, variable)
         var_sum[i] = np.nanmean(var)
-    return var_sum / np.max(var_sum)
+    return var_sum
 
 
 def variable_avg_sum_daily(date1, date2, extent, variables):
@@ -171,19 +193,21 @@ def variable_avg_sum_daily(date1, date2, extent, variables):
     plt.show()
 
 
-def variables_against_time(date1, date2, extent, variable1, variable2):
+def variables_against_time(date1, date2, extent, var1, var2):
     # This shows you how two variables change with respect to time.
-    dates = ds.time_delta(date1, date2)
-    for date in dates:
-        if variable2 == 'leads':
-            var2 = ds.lead_average(date, date, extent)
-        else:
-            var2 = ds.variable_average(date, date, extent, variable2)
-        var1 = ds.variable_average(date, date, extent, variable1)
+    dates = ds.string_time_to_datetime(ds.time_delta(date1, date2))
+    fig, ax = plt.subplots()
+    ax_twin = ax.twinx()
 
+    for a, v in zip([ax, ax_twin], [var1, var2]):
+        Var = VarOptions(v)
+        a.plot(dates, variable_daily_avg(date1, date2, extent, v), c=Var.color, linestyle='--')
+        a.set_ylabel(Var.label())
+        print(Var.color)
+        a.yaxis.label.set_color(Var.color)
+        a.tick_params(axis='y', colors=Var.color)
 
-
-
+    plt.show()
 
 
 def plot_lead_cyclone_sum_monthly(date1, date2, extent, variable):
@@ -240,7 +264,8 @@ if __name__ == '__main__':
     extent = [65, 0, 80, 71]
     s_extent = [35, 34, 76, 75]
     no_extent = [180, -180, 90, 60]
-    variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
+    #variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
+    variables_against_time('20200101', '20200331', no_extent, 'leads', 'cyclone_occurence')
 
     #matrix_plot(ds.lead_average('20200112', '20200118', no_extent), extent=no_extent)
     #matrix_plot('20200316', '20200322', 'leads', cmap='inferno', extent=no_extent, show=False)
