@@ -6,6 +6,8 @@ import leads
 import data_science as ds
 import numpy as np
 import scipy.optimize as opt
+import calendar
+from dateutil.rrule import rrule, MONTHLY
 
 
 def setup_plot(extent):
@@ -21,6 +23,7 @@ def setup_plot(extent):
 
 
 def show_plot(fig, file_name, show):
+    # Decides if the figure is shown or saved.
     if show:
         plt.show()
     plt.savefig(file_name)
@@ -28,6 +31,8 @@ def show_plot(fig, file_name, show):
 
 
 def regional_lead_plot(date, extent=None, show=False, variable=None, plot_leads=True):
+    # Creates a regional plot of your data.
+    # Supported data: Leads, wind, cyclone_occurence, msl and possibly t2m in the future.
     file_name = date
 
     # setup data
@@ -62,6 +67,7 @@ def regional_lead_plot(date, extent=None, show=False, variable=None, plot_leads=
 
 
 def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False, msl=True):
+    # This method is used to plot the difference between day to day Leads. It's currently not supported.
     if not file_name:
         file_name = f'./plots/diff{date1}-{date2}.png'
 
@@ -94,18 +100,17 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False, ms
 
 
 def lead_plot(grid, lead, fig, ax):
+    # Plots lead fraction
     im = ax.pcolormesh(grid.lon, grid.lat, 100 * lead.lead_data, cmap='cool', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.water, cmap='coolwarm', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.land, cmap='twilight', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.cloud, cmap='Blues', transform=ccrs.PlateCarree())
-    # lon, lat, area = ds.select_area(grid, lead, np.ones(grid.lat.shape))
-    # ax.pcolormesh(lon, lat, area, transform=ccrs.PlateCarree())
     cbar = fig.colorbar(im, ax=ax)
     cbar.ax.tick_params(labelsize=17)
 
 
 def variable_plot(date, fig, ax, variable):
-    # Plots contour lines of mean sea level air pressure.
+    # Plots data that is stored in a Era5 grid.
     contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False}
     cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'wind': 'cividis', 't2m': 'coolwarm'}
     alpha_dict = {'msl': 1, 'cyclone_occurence': .25, 'wind': 1, 't2m': 1}
@@ -124,15 +129,20 @@ def variable_plot(date, fig, ax, variable):
         cbar.ax.tick_params(labelsize=17)
 
 
-def matrix_plot(matrix, extent=None):
+def matrix_plot(date1, date2, variable, cmap='RdYlGn', clim=(None, None), extent=None, show=False):
+    if variable == 'leads':
+        matrix = ds.lead_average(date1, date2, extent)
+    else:
+        matrix = ds.variable_average(date1, date2, extent, variable)
+
     fig, ax = setup_plot(extent)
     grid = leads.CoordinateGrid()
-    im = ax.pcolormesh(grid.lon, grid.lat, matrix, cmap='RdYlGn', transform=ccrs.PlateCarree())
-    # im = ax.pcolormesh(grid.lon, grid.lat, matrix, cmap='bwr', transform=ccrs.PlateCarree())
-    #im.set_clim(-.6, .6)
+    im = ax.pcolormesh(grid.lon, grid.lat, matrix, cmap=cmap, transform=ccrs.PlateCarree())
+    im.set_clim(clim[0], clim[1])
     cbar = fig.colorbar(im, ax=ax)
     cbar.ax.tick_params(labelsize=17)
-    plt.show()
+    ax.set_title(f'{variable}-{date1}-{date2}', fontsize=17)
+    show_plot(fig, f'./plots/{variable}-{date1}-{date2}.png', show)
 
 
 def quantify(lead_diff, cyc_diff):
@@ -148,19 +158,30 @@ def quantify(lead_diff, cyc_diff):
     plt.show()
 
 
-def plot_lead_cyclone_sum(extent):
-    dates = ds.time_delta('20191201', '20191230')
-    datetime_dates = [datetime.date(int(d[:4]), int(d[4:6]), int(d[6:])) for d in dates]
-    cyc_sum, lead_sum = [], []
+def plot_lead_cyclone_sum_monthly(date1, date2, extent, variable):
+    # get all months between dates
+    start_date = datetime.date(int(date1[:4]), int(date1[4:6]), int(date1[6:]))
+    end_date = datetime.date(int(date2[:4]), int(date2[4:6]), int(date2[6:]))
+    dates = [(dt.year, dt.month) for dt in rrule(MONTHLY, dtstart=start_date, until=end_date)]
+    lead_avg, variable_avg = [], []
 
-    for i, date in enumerate(dates):
-        lead = ds.lead_average(date, date, extent)
-        entries = lead[~np.isnan(lead)]
-        average_lead = np.sum(entries) / len(entries)
-        lead_sum.append(average_lead)
+    for date in dates:
+        month_r = calendar.monthrange(date[0], date[1])[1]
+        year_month = str(date[0]) + str(date[1]).zfill(2)
+        print(year_month)
+        avg = ds.lead_average(year_month + '01', year_month + str(month_r), extent)
+        var_avg = ds.variable_average(year_month + '01', year_month + str(month_r), extent, variable)
+        avg = avg[~np.isnan(avg)]
+        var_avg = var_avg[~np.isnan(var_avg)]
+        lead_avg.append(np.sum(avg) / len(avg))
+        variable_avg.append(np.sum(var_avg) / len(var_avg))
 
-
-    plt.scatter(datetime_dates, lead_sum)
+    dates = [str(date[0]) + '-' + str(date[1]).zfill(2) for date in dates]
+    plt.title('Monthly lead fraction of the entire Arctic')
+    plt.xlabel('Month')
+    plt.ylabel('Normalized average lead fraction per month')
+    plt.scatter(dates, lead_avg, label='leads')
+    plt.scatter(dates, variable_avg, label=f'{variable}')
     plt.show()
 
 
@@ -190,28 +211,8 @@ if __name__ == '__main__':
     # regional_lead_plot('20200221', show=True, variable=None, plot_leads=True)
 
     extent = [65, 0, 80, 71]
-    # matrix_plot(ds.cyclone_trace('20200308', '20200316'), extent)
-    # matrix_plot(ds.cyclone_trace('20200227', '20200307'), extent)
-    # plots_for_case(case1, extent1, ['cyclone_occurence', 'msl'], True)
+    no_extent = [180, -180, 90, 60]
 
-    # lead_diff = ds.lead_average('20200114', '20200117') - ds.lead_average('20200110', '20200113') #case2
-    # cyc_diff = ds.cyclone_trace('20200114', '20200117') - ds.cyclone_trace('20200110', '20200113') #case2
-    # lead_diff = ds.lead_average('20200218', '20200220') - ds.lead_average('20200212', '20200216') #case1
-    # cyc_diff = ds.cyclone_trace('20200218', '20200220', extent) - ds.cyclone_trace('20200212', '20200216', extent) #case1
-    # lead_diff = ds.lead_average('20200131', '20200203') - ds.lead_average('20200126', '20200130') #case3
-    # cyc_diff = ds.cyclone_trace('20200131', '20200203') - ds.cyclone_trace('20200126', '20200130') #case3
-    # lead_diff = ds.lead_average('20200308', '20200316') - ds.lead_average('20200227', '20200307') #case4
-    # cyc_diff = ds.cyclone_trace('20200308', '20200316') - ds.cyclone_trace('20200317', '20200325') #case4
-
-    #lead_test = ds.lead_average('20200217', '20200221', extent1) - .5*(ds.lead_average('20200201', '20200216', extent1) + ds.lead_average('20200222', '20200229', extent1))
-    #cyc_test = ds.cyclone_trace('20200217', '20200221') - .5*(ds.cyclone_trace('20200201', '20200216') + ds.cyclone_trace('20200222', '20200229'))
-
-    #matrix_plot(lead_test, None)
-    #quantify(lead_test, cyc_test)
-
-    plot_lead_cyclone_sum(extent)
-
-    # matrix_plot(ds.lead_average('20200210', '20200215'), extent)
-    # matrix_plot(ds.lead_average('20200217', '20200221'), extent)
-    # plots_for_case(case1, extent1, ['wind', 'msl'],  plot_lead=False)
-    # plots_for_case(case1, extent1, ['cyclone_occurence', 'msl'],  plot_lead=False)
+    #matrix_plot(ds.lead_average('20200112', '20200118', no_extent), extent=no_extent)
+    matrix_plot('20200222', '20200226', 'leads', cmap='inferno', extent=no_extent, show=False)
+    #plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')

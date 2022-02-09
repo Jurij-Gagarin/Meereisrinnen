@@ -80,24 +80,26 @@ def select_area(grid, lead, matrix, points):
     return lon, lat, matrix
 
 
-def cyclone_trace(date1, date2, extent, filter_data=False):
+def variable_average(date1, date2, extent, variable, filter_data=False):
     # This Method calculates the average of the cyclone_occurence matrix within the range of date1,2.
     # Optionally the data can be filtered via Gaussian. You may want to set different sigma values
     dates = time_delta(date1, date2)
     grid = leads.CoordinateGrid()
-    cum_cyclone = np.full(grid.lon.shape, np.nan)
-    N = len(dates)
+    cum_var = np.full(grid.lon.shape, np.nan)
+    count_values = np.zeros(grid.lon.shape)
 
     for date in dates:
         lead = leads.Lead(date)
-        cyclone = leads.Era5Regrid(lead, 'cyclone_occurence')
-        cyclone = cyclone.get_variable(date)
-        cyclone = select_area(grid, lead, cyclone, extent)[2]
-        cum_cyclone = sum_nan_arrays(cum_cyclone, cyclone)
-    cum_cyclone = cum_cyclone/N
+        var = leads.Era5Regrid(lead, variable)
+        var = var.get_variable(date)
+        var = select_area(grid, lead, var, extent)[2]
+        cum_var = sum_nan_arrays(cum_var, var)
+        row, col = np.where(~np.isnan(var))
+        count_values[row, col] += 1
+    cum_var = cum_var / count_values
     if filter_data:
-        cum_cyclone = scipy.ndimage.filters.gaussian_filter(cum_cyclone, [1.0, 1.0], mode='constant', order=0)
-    return cum_cyclone
+        cum_var = scipy.ndimage.filters.gaussian_filter(cum_var, [1.0, 1.0], mode='constant', order=0)
+    return cum_var
 
 
 def lead_average(date1, date2, extent):
@@ -105,15 +107,37 @@ def lead_average(date1, date2, extent):
     dates = time_delta(date1, date2)
     grid = leads.CoordinateGrid()
     cum_leads = np.full(grid.lon.shape, np.nan)
-    N = len(dates)
+    count_values = np.zeros(grid.lon.shape)
 
     for date in dates:
         lead = leads.Lead(date)
         lead = select_area(grid, lead, lead.lead_data, extent)[2]
         cum_leads = sum_nan_arrays(cum_leads, lead)
+        row, col = np.where(~np.isnan(lead))
+        count_values[row, col] += 1
 
-    cum_leads = cum_leads/N
+    cum_leads = cum_leads / count_values
     return cum_leads
+
+
+def lead_monthly_average(year, month, extent):
+    # This method calculates the monthly average of lead fraction.
+    time = str(year) + '-' + str(month).zfill(2)
+    dates = np.arange(time, time[:-2] + str(int(time[-2:])+1).zfill(2), dtype='datetime64[D]')
+    dates = [str(date).replace('-', '')for date in dates]   # gives a list of '20200101' like dates, for chosen month
+    grid = leads.CoordinateGrid()
+    monthly_leads = np.full(grid.lon.shape, np.nan)
+    count_values = np.zeros(grid.lon.shape)
+    N = len(dates)
+
+    for date in dates:
+        lead = leads.Lead(date)
+        lead = select_area(grid, lead, lead.lead_data, extent)[2]
+        row, col = np.where(~np.isnan(lead))
+        count_values[row, col] += 1
+        monthly_leads = sum_nan_arrays(monthly_leads, lead)
+
+    return dates
 
 
 if __name__ == '__main__':
@@ -129,5 +153,5 @@ if __name__ == '__main__':
 
     #lead_average('20200101', '20200228')
 
-    print(np.full((3,2), np.nan))
+    print(lead_monthly_average(2020, 2, extent1))
 
