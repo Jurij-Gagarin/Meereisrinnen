@@ -93,7 +93,7 @@ class Era5:
         # import air pressure data
         self.var = variable
         variable_dict = {'msl': 'data/ERA5_MSLP_2020_JanApr.nc', 'wind': 'data/ERA5_Wind_2020_JanApr.nc',
-                         't2m': 'data/ERA5_T2m_2020_JanApr.nc',
+                         't2m': 'data/ERA5_T2m_2020_JanApr_new.nc',
                          'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new.nc'}
 
         path = variable_dict[self.var]

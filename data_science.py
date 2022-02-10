@@ -65,6 +65,8 @@ def variable_manip(var, matrix):
     # This method does small manipulations (unit change) to data from Era5 that is stored in a lead fraction like matrix
     if var == 'msl':
         return .01 * matrix
+    elif var == 'cyclone_occurence':
+        return 100 * matrix
     else:
         return matrix
 
