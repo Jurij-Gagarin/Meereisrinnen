@@ -12,14 +12,17 @@ class VarOptions:
     def __init__(self, var):
         self.var = var
         # Dictionaries that assign colors, cmaps, ... to certain variables
-        contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False}
+        contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False,
+                        'siconc': False}
         cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'wind': 'cividis', 't2m': 'coolwarm',
-                     'leads': 'inferno'}
-        alpha_dict = {'msl': 1, 'cyclone_occurence': .25, 'wind': 1, 't2m': 1, 'leads': 1}
-        color_dict = {'msl': 'red', 'leads': 'blue', 'wind': 'orange', 'cyclone_occurence': 'green', 't2m': 'purple'}
-        unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K'}
+                     'leads': 'inferno', 'siconc': 'Blues'}
+        alpha_dict = {'msl': 1, 'cyclone_occurence': .25, 'wind': 1, 't2m': 1, 'leads': 1, 'siconc': 1}
+        color_dict = {'msl': 'red', 'leads': 'blue', 'wind': 'orange', 'cyclone_occurence': 'green', 't2m': 'purple',
+                      'siconc': 'turquoise'}
+        unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K', 'siconc': '%'}
         name_dict = {'cyclone_occurence': 'cyclone frequency', 'leads': 'lead fraction', 'wind': 'wind speed',
-                     't2m': 'two meter temperature', 'msl': 'mean sea level pressure'}
+                     't2m': 'two meter temperature', 'msl': 'mean sea level pressure', 'siconc': 'sea ice concentration'
+                     }
 
         self.contour = contour_plot[self.var]
         self.cmap = cmap_dict[self.var]
@@ -76,11 +79,11 @@ def regional_lead_plot(date, extent=None, show=False, variable=None, plot_leads=
             for v in variable:
                 variable_plot(date, fig, ax, v)
                 file_name = v + '_' + file_name
-                title += ', ' + v
+                title += ', ' + VarOptions(v).label()
         else:
             variable_plot(date, fig, ax, variable)
             file_name = variable + '_' + file_name
-            title += ', ' + variable
+            title += ', ' + VarOptions(variable).label()
 
     # Show/Save the figure
     ax.set_title(title, size=17)
@@ -134,19 +137,17 @@ def lead_plot(grid, lead, fig, ax):
 
 def variable_plot(date, fig, ax, variable):
     # Plots data that is stored in a Era5 grid.
-    contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False}
-    cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'wind': 'cividis', 't2m': 'coolwarm'}
-    alpha_dict = {'msl': 1, 'cyclone_occurence': .25, 'wind': 1, 't2m': 1}
+    Var = VarOptions(variable)
     data_set = leads.Era5(variable)
     # data_set = leads.Era5Regrid(leads.Lead(date), variable)
 
-    if contour_plot[variable]:
-        contours = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=cmap_dict[variable],
-                              alpha=alpha_dict[variable], transform=ccrs.PlateCarree(), levels=10)
+    if Var.contour:
+        contours = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=Var.cmap,
+                              alpha=Var.alpha, transform=ccrs.PlateCarree(), levels=10)
         ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
     else:
-        im = ax.pcolormesh(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=cmap_dict[variable],
-                           alpha=alpha_dict[variable], transform=ccrs.PlateCarree())
+        im = ax.pcolormesh(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=Var.cmap,
+                           alpha=Var.alpha, transform=ccrs.PlateCarree())
         # im.set_clim(0, 25)
         cbar = fig.colorbar(im, ax=ax)
         cbar.ax.tick_params(labelsize=17)
@@ -196,14 +197,15 @@ def variable_avg_sum_daily(date1, date2, extent, variables):
     plt.show()
 
 
-def variables_against_time(date1, date2, extent, var1, var2, title=''):
+def variables_against_time(date1, date2, extent, var1, var2):
     # This shows you how two variables change with respect to time.
     dates = ds.string_time_to_datetime(ds.time_delta(date1, date2))
     fig, ax = plt.subplots()
     ax_twin = ax.twinx()
+    Var1, Var2 = VarOptions(var1), VarOptions(var2)
+    title = f'Changes in {Var1.name} and {Var2.name} over time within {extent}.'
 
-    for a, v in zip([ax, ax_twin], [var1, var2]):
-        Var = VarOptions(v)
+    for a, v, Var in zip([ax, ax_twin], [var1, var2], [Var1, Var2]):
         a.plot(dates, variable_daily_avg(date1, date2, extent, v), c=Var.color, linestyle='--')
         a.set_ylabel(Var.label())
         a.yaxis.label.set_color(Var.color)
@@ -261,14 +263,13 @@ if __name__ == '__main__':
     case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
     extent4 = [65, 0, 80, 75]
 
-    #regional_lead_plot('20200221', show=True, variable='t2m', plot_leads=False)
+    #regional_lead_plot('20200221', show=True, variable='siconc', plot_leads=False)
 
     extent = [65, 0, 80, 71]
     s_extent = [180, -180, 90, 85]
     no_extent = [180, -180, 90, 60]
     #variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
-    variables_against_time('20200101', '20200331', no_extent, 'leads', 't2m',
-                           'Changes in lead fraction and two meter temperature over time for the entire Arctic.')
+    variables_against_time('20200101', '20200331', no_extent, 'cyclone_occurence', 'siconc')
 
     #matrix_plot(ds.lead_average('20200112', '20200118', no_extent), extent=no_extent)
     #matrix_plot('20200316', '20200322', 'leads', cmap='inferno', extent=no_extent, show=False)

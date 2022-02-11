@@ -65,7 +65,7 @@ def variable_manip(var, matrix):
     # This method does small manipulations (unit change) to data from Era5 that is stored in a lead fraction like matrix
     if var == 'msl':
         return .01 * matrix
-    elif var == 'cyclone_occurence':
+    elif var == 'cyclone_occurence' or var == 'siconc':
         return 100 * matrix
     else:
         return matrix
@@ -105,7 +105,9 @@ def variable_average(date1, date2, extent, variable, filter_data=False):
         cum_var = sum_nan_arrays(cum_var, var)
         row, col = np.where(~np.isnan(var))
         count_values[row, col] += 1
-    cum_var = cum_var / count_values
+    cum_var = np.divide(cum_var, count_values)
+    plt.imshow(count_values)
+    plt.show()
     if filter_data:
         cum_var = scipy.ndimage.filters.gaussian_filter(cum_var, [1.0, 1.0], mode='constant', order=0)
     return cum_var

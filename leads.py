@@ -93,7 +93,7 @@ class Era5:
         # import air pressure data
         self.var = variable
         variable_dict = {'msl': 'data/ERA5_MSLP_2020_JanApr.nc', 'wind': 'data/ERA5_Wind_2020_JanApr.nc',
-                         't2m': 'data/ERA5_T2m_2020_JanApr_new.nc',
+                         't2m': 'data/ERA5_T2m_2020_JanApr_new.nc', 'siconc': 'data/ERA5_SIC_2020.nc',
                          'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new.nc'}
 
         path = variable_dict[self.var]
@@ -125,7 +125,7 @@ class Era5Regrid:
     def __init__(self, lead, variable):
         # import air pressure data
         variable_dict = {'msl': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_2020_Wind_regrid_bil.nc',
-                         't2m': 'data/ERA5_2020_T2m_regrid_bil.nc',
+                         't2m': 'data/ERA5_2020_T2m_regrid_bil.nc', 'siconc': 'data/ERA5_SIC_2020_regrid_bil.nc',
                          'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new_regrid_bil.nc'}
 
         self.var = variable
@@ -157,6 +157,7 @@ class Era5Regrid:
 
 
 if __name__ == '__main__':
+    test = Era5('siconc')
     pass
 
 
