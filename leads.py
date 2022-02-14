@@ -21,43 +21,7 @@ class Lead:
         self.cloud, self.lead_data = None, None
 
         # sort data clean up date from rows/cols without entries
-        #self.clear_matrix()
         self.sort_matrix()
-
-    def clear_matrix(self, trigger=-0.1):
-        # Returns indices of rows and columns without any data
-        trigger = np.float32(trigger)
-        m, n = self.lead_frac.shape
-        row_clear, col_clear = np.repeat(trigger, n), np.repeat(trigger, m)
-
-        for i, row in enumerate(self.lead_frac):
-            if np.array_equal(row, row_clear):
-                self.del_row.append(i)
-        for i in range(n):
-            if np.array_equal(self.lead_frac[:, i], col_clear):
-                self.del_col.append(i)
-
-        self.lead_frac = np.delete(self.lead_frac, self.del_row, 0)
-        self.lead_frac = np.delete(self.lead_frac, self.del_col, 1)
-
-    def visualize_matrix(self, file_name=None, show=False):
-        # very simple visualization of the lead fraction matrix
-        # This was used for testing. Might be removed in the future.
-        fig, ax = plt.subplots(figsize=(10, 10))
-        if not file_name:
-            file_name = f'./plots/{self.date}.png'
-        im = ax.imshow(self.lead_frac, cmap='cool')
-        im.cmap.set_over('#dddddd')
-        im.cmap.set_under('#00394d')
-
-        im.set_clim(0, 1)
-        fig.colorbar(im, ax=ax)
-        ax.axis('off')
-        ax.set_title(f'Sea ice leads {self.date[6:]}.{self.date[4:6]}.{self.date[:4]}')
-        if show:
-            plt.show()
-        plt.savefig(file_name)
-        plt.close(fig)
 
     def sort_matrix(self):
         # Creates lead frac matrix that contains only the data-points
@@ -70,6 +34,20 @@ class Lead:
         self.lead_data[self.lead_data > 1] = np.nan
         self.lead_data[self.lead_data < 0] = np.nan
 
+    def new_leads(self):
+        prior_date = ds.string_time_to_datetime(self.date)
+        prior_date -= datetime.timedelta(days=1)
+        prior_date = ds.datetime_to_string(prior_date)
+        try:
+            lead1 = Lead(prior_date).lead_data
+            lead2 = self.lead_data
+            new_lead = lead2 - lead1
+
+            return new_lead.clip(min=0)
+        except FileNotFoundError:
+            print(f'No data available for date prior {ds.string_time_to_datetime(self.date)}.')
+            print('I could therefor not calculate the new leads.')
+
 
 class CoordinateGrid:
     def __init__(self):
@@ -79,8 +57,6 @@ class CoordinateGrid:
         ds_latlon = nc.Dataset(path_grid)
         self.lat = ds_latlon['Lat Grid'][:]
         self.lon = ds_latlon['Lon Grid'][:]
-        #self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
-        #self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
 
     def vals(self):
         # Method used to generate grid description, should not be used anymore
@@ -157,6 +133,7 @@ class Era5Regrid:
 
 
 if __name__ == '__main__':
+    Lead('20191101').new_leads()
     pass
 
 

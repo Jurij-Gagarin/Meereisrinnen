@@ -6,6 +6,15 @@ import scipy
 import scipy.ndimage
 
 
+def datetime_to_string(dates):
+    if not isinstance(dates, list):
+        return ''.join(c for c in str(dates) if c not in '-')
+    else:
+        for d, date in enumerate(dates):
+            dates[d] = ''.join(c for c in str(date) if c not in '-')
+        return [dates]
+
+
 def string_time_to_datetime(dates):
     if not isinstance(dates, list):
         return date(int(dates[:4]), int(dates[4:6]), int(dates[6:]))
@@ -53,6 +62,14 @@ def two_lead_diff(lead1, lead2):
     lead2.cloud = compare_nan(lead1.cloud, lead2.cloud)
     lead2.water = compare_nan(lead1.water, lead2.water)
     lead2.land = compare_nan(lead1.land, lead2.land)
+
+
+def new_leads(date1, date2):
+    lead1 = leads.Lead(date1).lead_data
+    lead2 = leads.Lead(date2).lead_data
+    new_lead = lead2 - lead1
+
+    return new_lead.clip(min=0)
 
 
 def clear_matrix(matrix, rows, cols):
@@ -120,7 +137,7 @@ def lead_average(date1, date2, extent):
 
     for date in dates:
         lead = leads.Lead(date)
-        lead = select_area(grid, lead, lead.lead_data, extent)[2]
+        lead = select_area(grid, lead, lead.new_leads(), extent)[2]
         cum_leads = sum_nan_arrays(cum_leads, lead)
         row, col = np.where(~np.isnan(lead))
         count_values[row, col] += 1

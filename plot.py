@@ -21,7 +21,7 @@ class VarOptions:
         color_dict = {'msl': 'red', 'leads': 'blue', 'wind': 'orange', 'cyclone_occurence': 'green', 't2m': 'purple',
                       'siconc': 'turquoise'}
         unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K', 'siconc': '%'}
-        name_dict = {'cyclone_occurence': 'cyclone frequency', 'leads': 'lead fraction', 'wind': 'wind speed',
+        name_dict = {'cyclone_occurence': 'cyclone frequency', 'leads': 'daily new lead fraction', 'wind': 'wind speed',
                      't2m': 'two meter temperature', 'msl': 'mean sea level pressure', 'siconc': 'sea ice concentration'
                      }
 
@@ -198,7 +198,7 @@ def variable_avg_sum_daily(date1, date2, extent, variables):
     plt.show()
 
 
-def variables_against_time(date1, date2, extent, var1, var2):
+def variables_against_time(date1, date2, extent, var1, var2, spline=False):
     # This shows you how two variables change with respect to time.
     dates = ds.string_time_to_datetime(ds.time_delta(date1, date2))
     fig, ax = plt.subplots()
@@ -209,17 +209,22 @@ def variables_against_time(date1, date2, extent, var1, var2):
     for a, v, Var in zip([ax, ax_twin], [var1, var2], [Var1, Var2]):
         y = variable_daily_avg(date1, date2, extent, v)
         x = list(range(len(dates)))
-        a.scatter(x, y, c=Var.color)
 
-        f = CubicSpline(x, y, bc_type='natural')
-        x_new = np.linspace(0, len(dates), 1000)
-        y_new = f(x_new)
-        a.plot(x_new, y_new, c=Var.color, linestyle='--')
+        if spline:
+            x = list(range(len(dates)))
+            a.scatter(x, y, c=Var.color)
+            f = CubicSpline(x, y, bc_type='natural')
+            x_new = np.linspace(0, len(dates), 1000)
+            y_new = f(x_new)
+            a.plot(x_new, y_new, c=Var.color, linestyle='--')
+        else:
+            a.plot(dates, y, c=Var.color, linestyle='--')
 
-        a.set_ylabel(Var.label())
+        a.set_ylabel(Var.label(), fontsize=15)
         a.yaxis.label.set_color(Var.color)
-        a.tick_params(axis='y', colors=Var.color)
-    ax.set_title(title)
+        a.tick_params(axis='y', colors=Var.color, labelsize=15)
+    ax.tick_params(axis='x', labelsize=15)
+    ax.set_title(title, fontsize=15)
     plt.show()
 
 
@@ -278,7 +283,7 @@ if __name__ == '__main__':
     s_extent = [180, -180, 90, 85]
     no_extent = [180, -180, 90, 60]
     #variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
-    variables_against_time('20200101', '20200131', extent, 'leads', 'wind')
+    variables_against_time('20200210', '20200229', extent, 'leads', 'cyclone_occurence')
 
     #matrix_plot(ds.lead_average('20200112', '20200118', no_extent), extent=no_extent)
     #matrix_plot('20200316', '20200322', 'leads', cmap='inferno', extent=no_extent, show=False)
