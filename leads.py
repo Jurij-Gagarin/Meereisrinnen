@@ -21,7 +21,7 @@ class Lead:
         self.cloud, self.lead_data = None, None
 
         # sort data clean up date from rows/cols without entries
-        self.clear_matrix()
+        #self.clear_matrix()
         self.sort_matrix()
 
     def clear_matrix(self, trigger=-0.1):
@@ -79,8 +79,8 @@ class CoordinateGrid:
         ds_latlon = nc.Dataset(path_grid)
         self.lat = ds_latlon['Lat Grid'][:]
         self.lon = ds_latlon['Lon Grid'][:]
-        self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
-        self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
+        #self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
+        #self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
 
     def vals(self):
         # Method used to generate grid description, should not be used anymore
@@ -151,10 +151,10 @@ class Era5Regrid:
         mean_variable = np.zeros(new_shape)
         for t in range(t1, t2 + 1):
             add_msl = np.reshape(self.variable[t], self.shape)
-            print(add_msl.shape)
             #add_msl = ds.clear_matrix(add_msl, self.lead.del_row, self.lead.del_col)
             mean_variable = np.add(mean_variable, add_msl)
         return ds.variable_manip(self.var, .25 * mean_variable)
+
 
 if __name__ == '__main__':
     pass

@@ -6,6 +6,7 @@ import data_science as ds
 import numpy as np
 import calendar
 from dateutil.rrule import rrule, MONTHLY
+from scipy.interpolate import CubicSpline
 
 
 class VarOptions:
@@ -179,7 +180,6 @@ def variable_daily_avg(date1, date2, extent, variable):
             var = 100*ds.lead_average(date, date, extent)
         else:
             var = ds.variable_average(date, date, extent, variable)
-        print(np.nanmin(var), np.nanmax(var))
         var_sum[i] = np.nanmean(var)
     return var_sum
 
@@ -207,7 +207,15 @@ def variables_against_time(date1, date2, extent, var1, var2):
     title = f'Changes in {Var1.name} and {Var2.name} over time within {extent}.'
 
     for a, v, Var in zip([ax, ax_twin], [var1, var2], [Var1, Var2]):
-        a.plot(dates, variable_daily_avg(date1, date2, extent, v), c=Var.color, linestyle='--')
+        y = variable_daily_avg(date1, date2, extent, v)
+        x = list(range(len(dates)))
+        a.scatter(x, y, c=Var.color)
+
+        f = CubicSpline(x, y, bc_type='natural')
+        x_new = np.linspace(0, len(dates), 1000)
+        y_new = f(x_new)
+        a.plot(x_new, y_new, c=Var.color, linestyle='--')
+
         a.set_ylabel(Var.label())
         a.yaxis.label.set_color(Var.color)
         a.tick_params(axis='y', colors=Var.color)
@@ -264,13 +272,13 @@ if __name__ == '__main__':
     case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
     extent4 = [65, 0, 80, 75]
 
-    regional_lead_plot('20200221', show=True, variable='siconc', plot_leads=True)
+    #regional_lead_plot('20200221', show=True, variable='siconc', plot_leads=True)
 
     extent = [65, 0, 80, 71]
     s_extent = [180, -180, 90, 85]
     no_extent = [180, -180, 90, 60]
     #variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
-    #variables_against_time('20200101', '20200110', no_extent, 'cyclone_occurence', 'siconc')
+    variables_against_time('20200101', '20200131', extent, 'leads', 'wind')
 
     #matrix_plot(ds.lead_average('20200112', '20200118', no_extent), extent=no_extent)
     #matrix_plot('20200316', '20200322', 'leads', cmap='inferno', extent=no_extent, show=False)
