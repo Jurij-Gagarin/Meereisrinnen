@@ -93,7 +93,7 @@ class Era5:
         # import air pressure data
         self.var = variable
         variable_dict = {'msl': 'data/ERA5_MSLP_2020_JanApr.nc', 'wind': 'data/ERA5_Wind_2020_JanApr.nc',
-                         't2m': 'data/ERA5_T2m_2020_JanApr_new.nc', 'siconc': 'data/ERA5_SIC_2020.nc',
+                         't2m': 'data/ERA5_T2m_2020_JanApr_new.nc', 'siconc': 'data/ERA5_SIC_2020_JanApr.nc',
                          'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new.nc'}
 
         path = variable_dict[self.var]
@@ -125,7 +125,7 @@ class Era5Regrid:
     def __init__(self, lead, variable):
         # import air pressure data
         variable_dict = {'msl': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_2020_Wind_regrid_bil.nc',
-                         't2m': 'data/ERA5_2020_T2m_regrid_bil.nc', 'siconc': 'data/ERA5_SIC_2020_regrid_bil.nc',
+                         't2m': 'data/ERA5_2020_T2m_regrid_bil.nc', 'siconc': 'data/ERA5_SIC_regrid_bil.nc',
                          'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new_regrid_bil.nc'}
 
         self.var = variable
@@ -139,8 +139,8 @@ class Era5Regrid:
         self.lat = np.reshape(data_set.variables['lat'], self.shape)
         self.variable = data_set.variables[self.var]
 
-        self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
-        self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
+        #self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
+        #self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
 
     def get_variable(self, date):
         d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
@@ -151,13 +151,12 @@ class Era5Regrid:
         mean_variable = np.zeros(new_shape)
         for t in range(t1, t2 + 1):
             add_msl = np.reshape(self.variable[t], self.shape)
-            add_msl = ds.clear_matrix(add_msl, self.lead.del_row, self.lead.del_col)
-            mean_variable += add_msl
+            print(add_msl.shape)
+            #add_msl = ds.clear_matrix(add_msl, self.lead.del_row, self.lead.del_col)
+            mean_variable = np.add(mean_variable, add_msl)
         return ds.variable_manip(self.var, .25 * mean_variable)
 
-
 if __name__ == '__main__':
-    test = Era5('siconc')
     pass
 
 

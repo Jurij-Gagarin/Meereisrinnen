@@ -138,8 +138,8 @@ def lead_plot(grid, lead, fig, ax):
 def variable_plot(date, fig, ax, variable):
     # Plots data that is stored in a Era5 grid.
     Var = VarOptions(variable)
-    data_set = leads.Era5(variable)
-    # data_set = leads.Era5Regrid(leads.Lead(date), variable)
+    # data_set = leads.Era5(variable)
+    data_set = leads.Era5Regrid(leads.Lead(date), variable) # With this Era5Regrid-class is tested
 
     if Var.contour:
         contours = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=Var.cmap,
@@ -179,6 +179,7 @@ def variable_daily_avg(date1, date2, extent, variable):
             var = 100*ds.lead_average(date, date, extent)
         else:
             var = ds.variable_average(date, date, extent, variable)
+        print(np.nanmin(var), np.nanmax(var))
         var_sum[i] = np.nanmean(var)
     return var_sum
 
@@ -263,13 +264,13 @@ if __name__ == '__main__':
     case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
     extent4 = [65, 0, 80, 75]
 
-    #regional_lead_plot('20200221', show=True, variable='siconc', plot_leads=False)
+    regional_lead_plot('20200221', show=True, variable='siconc', plot_leads=True)
 
     extent = [65, 0, 80, 71]
     s_extent = [180, -180, 90, 85]
     no_extent = [180, -180, 90, 60]
     #variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
-    variables_against_time('20200101', '20200331', no_extent, 'cyclone_occurence', 'siconc')
+    #variables_against_time('20200101', '20200110', no_extent, 'cyclone_occurence', 'siconc')
 
     #matrix_plot(ds.lead_average('20200112', '20200118', no_extent), extent=no_extent)
     #matrix_plot('20200316', '20200322', 'leads', cmap='inferno', extent=no_extent, show=False)

@@ -106,8 +106,6 @@ def variable_average(date1, date2, extent, variable, filter_data=False):
         row, col = np.where(~np.isnan(var))
         count_values[row, col] += 1
     cum_var = np.divide(cum_var, count_values)
-    plt.imshow(count_values)
-    plt.show()
     if filter_data:
         cum_var = scipy.ndimage.filters.gaussian_filter(cum_var, [1.0, 1.0], mode='constant', order=0)
     return cum_var
