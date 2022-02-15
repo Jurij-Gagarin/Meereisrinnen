@@ -1,6 +1,5 @@
 import datetime
-
-import matplotlib
+import case_information as ci
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import leads
@@ -46,7 +45,7 @@ def setup_plot(extent):
     ax.gridlines()
     ax.set_global()
     ax.coastlines(resolution='50m')
-    extent = extent if extent else (-180.0, 180.0, 68.5, 90)
+    extent = extent if extent else ci.arctic_extent
     ax.set_extent(extent, crs=ccrs.PlateCarree())
     return fig, ax
 
@@ -60,9 +59,9 @@ def show_plot(fig, file_name, show):
         plt.close(fig)
 
 
-def regional_lead_plot(date, extent=None, show=False, variable=None, plot_leads=True):
+def regional_var_plot(date, extent=None, show=False, variable=None, plot_leads=True):
     # Creates a regional plot of your data.
-    # Supported data: Leads, wind, cyclone_occurence, msl and possibly t2m in the future.
+    # Supported data: Leads, wind, cyclone_occurence, msl and t2m.
     file_name = date
 
     # setup data
@@ -157,19 +156,21 @@ def variable_plot(date, fig, ax, variable):
         cbar.ax.tick_params(labelsize=17)
 
 
-def matrix_plot(date1, date2, variable, cmap='RdYlGn', clim=(None, None), extent=None, show=False):
+def matrix_plot(date1, date2, variable, clim=(None, None), extent=None, show=False):
+    Var = VarOptions(variable)
     if variable == 'leads':
-        matrix = ds.lead_average(date1, date2, extent)
+        matrix = 100*ds.lead_average(date1, date2, extent)
     else:
         matrix = ds.variable_average(date1, date2, extent, variable)
 
     fig, ax = setup_plot(extent)
     grid = leads.CoordinateGrid()
-    im = ax.pcolormesh(grid.lon, grid.lat, matrix, cmap=cmap, transform=ccrs.PlateCarree())
+    im = ax.pcolormesh(grid.lon, grid.lat, matrix, cmap=Var.cmap, transform=ccrs.PlateCarree())
     im.set_clim(clim[0], clim[1])
     cbar = fig.colorbar(im, ax=ax)
     cbar.ax.tick_params(labelsize=17)
-    ax.set_title(f'{variable}-{date1}-{date2}', fontsize=17)
+    ax.set_title(f'{Var.label()} avg from {ds.string_time_to_datetime(date1)} to '
+                 f'{ds.string_time_to_datetime(date2)}', fontsize=17)
     show_plot(fig, f'./plots/{variable}-{date1}-{date2}.png', show)
 
 
@@ -197,7 +198,7 @@ def variable_avg_sum_daily(date1, date2, extent, variables):
     ax.scatter(var1, var2)
     ax.set_xlabel(f'{variables[0]}')
     ax.set_ylabel(f'{variables[1]}')
-    ax.set_title(f'Average {variables[0]} against {variables[1]} daily.')
+    ax.set_title(f'average {variables[0]} against {variables[1]} daily.')
     plt.show()
 
 
@@ -211,7 +212,6 @@ def variables_against_time(date1, date2, extent, var1, var2, spline=False, show=
 
     for a, v, Var in zip([ax, ax_twin], [var1, var2], [Var1, Var2]):
         y = variable_daily_avg(date1, date2, extent, v)
-        x = list(range(len(dates)))
 
         if spline:
             x = list(range(len(dates)))
@@ -263,7 +263,7 @@ def plot_lead_cyclone_sum_monthly(date1, date2, extent, variable):
 def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
     for i, date in enumerate(case):
         print(f'Working on plots for date:{date}')
-        regional_lead_plot(date, extent=extent, variable=var, plot_leads=plot_lead)
+        regional_var_plot(date, extent=extent, variable=var, plot_leads=plot_lead)
 
         if diff:
             try:
@@ -278,6 +278,6 @@ if __name__ == '__main__':
     # variables_against_time('20200101', '20200331', arctic_extent, 'leads', 'cyclone_occurence')
     # variables_against_time('20200101', '20200331', barent_extent, 'leads', 'cyclone_occurence')
     # variables_against_time('20200101', '20200331', s_extent, 'leads', 'cyclone_occurence')
-    # matrix_plot('20200320', '20200325', 'leads', extent=arctic_extent, show=True)
+    matrix_plot('20200320', '20200325', 'leads', extent=ci.s_extent, show=True)
     # plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')
     pass
