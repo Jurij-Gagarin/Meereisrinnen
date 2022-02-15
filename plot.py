@@ -268,6 +268,9 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
 
 
 if __name__ == '__main__':
+    # TODO: sinnvollen extent für die Barentsee definieren
+    # TODO: Methode zum automatischen abspeichern der Plots erstellen
+    # TODO: Plots erstellen für den gesammten Zeitraum, für verschiedene Extents, speziell für unsere Zyklonenevents
     case1 = ['20200216', '20200217', '20200218', '20200219', '20200220', '20200221', '20200222']
     extent1 = (60, 0, 80, 75)
     case2 = ['20200114', '20200115', '20200116', '20200117', '20200118', '20200119', '20200120']
