@@ -223,6 +223,19 @@ def variables_against_time(date1, date2, extent, var1, var2, spline=False, show=
                    f'{ds.string_time_to_datetime(date2)}_{extent}.png', show)
 
 
+def plot_lead_from_vars(date1, date2, extent, var1, var2):
+    par, cov, fit, v1, v2, l = ds.lead_from_vars(date1, date2, extent, var1, var2)
+    dates = ds.string_time_to_datetime(ds.time_delta(date1, date2))
+
+    plt.plot(dates, l)
+    fit_data = [fit(x, par[0], par[1]) for x in zip(v1, v2)]
+    plt.plot(dates, fit_data)
+    plt.plot(dates, v1)
+    plt.plot(dates, v2)
+    print(par)
+    plt.show()
+
+
 def plot_lead_cyclone_sum_monthly(date1, date2, extent, variable):
     # get all months between dates
     start_date = datetime.date(int(date1[:4]), int(date1[4:6]), int(date1[6:]))
@@ -265,9 +278,10 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
 if __name__ == '__main__':
     # regional_var_plot('20200219', show=True, variable=['cyclone_occurence', 'msl'], plot_leads=True)
     # variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
-    variables_against_time('20200101', '20200331', ci.arctic_extent, 'leads', 'cyclone_occurence')
+    # variables_against_time('20200101', '20200331', ci.arctic_extent, 'leads', 'cyclone_occurence')
     # variables_against_time('20200101', '20200115', ci.arctic_extent, 'leads', 'siconc')
     # variables_against_time('20200101', '20200331', s_extent, 'leads', 'cyclone_occurence')
     #matrix_plot('20200320', '20200325', 'leads', extent=ci.s_extent, show=True)
     # plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')
+    plot_lead_from_vars('20200101', '20200131', ci.arctic_extent, 'cyclone_occurence', 'wind')
     pass

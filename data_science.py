@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from datetime import date, timedelta
 import scipy
 import scipy.ndimage
+import scipy.optimize as opt
 
 
 def datetime_to_string(dates):
@@ -180,9 +181,18 @@ def variable_daily_avg(date1, date2, extent, variable):
     return var_sum
 
 
-def lead_from_var(date1, date2, extent, var1, var2):
-    pass
+def lead_from_vars(date1, date2, extent, var1, var2):
+    v1 = variable_daily_avg(date1, date2, extent, var1)
+    v2 = variable_daily_avg(date1, date2, extent, var2)
+    l = variable_daily_avg(date1, date2, extent, 'leads')
+    v1 = v1 / np.max(v1)
+    v2 = v2 / np.max(v2)
+    l = l / np.max(l)
 
+    fit = lambda x, l1, l2: l1*x[0] + l2*x[1]
+    par, cov = opt.curve_fit(fit, (v1, v2), l)
+
+    return par, cov, fit, v1, v2, l
 
 if __name__ == '__main__':
     #lead_hist('20200218')
