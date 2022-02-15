@@ -43,7 +43,7 @@ class Lead:
             lead2 = self.lead_data
             new_lead = lead2 - lead1
 
-            return new_lead.clip(min=0)
+            return 100 * new_lead.clip(min=0)
         except FileNotFoundError:
             print(f'No data available for date prior {ds.string_time_to_datetime(self.date)}.')
             print('I could therefor not calculate the new leads.')

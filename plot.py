@@ -159,7 +159,7 @@ def variable_plot(date, fig, ax, variable):
 def matrix_plot(date1, date2, variable, clim=(None, None), extent=None, show=False):
     Var = VarOptions(variable)
     if variable == 'leads':
-        matrix = 100*ds.lead_average(date1, date2, extent)
+        matrix = ds.lead_average(date1, date2, extent)
     else:
         matrix = ds.variable_average(date1, date2, extent, variable)
 
@@ -174,25 +174,11 @@ def matrix_plot(date1, date2, variable, clim=(None, None), extent=None, show=Fal
     show_plot(fig, f'./plots/{variable}-{date1}-{date2}.png', show)
 
 
-def variable_daily_avg(date1, date2, extent, variable):
-    # This returns an array that contains the daily average values of your variable data.
-    dates = ds.time_delta(date1, date2)
-    var_sum = np.zeros(len(dates))
-    for i, date in enumerate(dates):
-        print(date)
-        if variable == 'leads':
-            var = 100 * ds.lead_average(date, date, extent)
-        else:
-            var = ds.variable_average(date, date, extent, variable)
-        var_sum[i] = np.nanmean(var)
-    return var_sum
-
-
 def variable_avg_sum_daily(date1, date2, extent, variables):
     # This Plot shows you how the daily averages of two variables correlate with each other.
     # variables need's to be an iterable that contains the strings, that corresponds to your variable
-    var1 = variable_daily_avg(date1, date2, extent, variables[0])
-    var2 = variable_daily_avg(date1, date2, extent, variables[1])
+    var1 = ds.variable_daily_avg(date1, date2, extent, variables[0])
+    var2 = ds.variable_daily_avg(date1, date2, extent, variables[1])
 
     fig, ax = plt.subplots()
     ax.scatter(var1, var2)
@@ -209,24 +195,28 @@ def variables_against_time(date1, date2, extent, var1, var2, spline=False, show=
     ax_twin = ax.twinx()
     Var1, Var2 = VarOptions(var1), VarOptions(var2)
     title = f'Changes in {Var1.name} and {Var2.name} over time within {extent}.'
+    y, i = [], 0
 
     for a, v, Var in zip([ax, ax_twin], [var1, var2], [Var1, Var2]):
-        y = variable_daily_avg(date1, date2, extent, v)
+        y.append(ds.variable_daily_avg(date1, date2, extent, v))
 
         if spline:
             x = list(range(len(dates)))
-            a.scatter(x, y, c=Var.color)
-            f = CubicSpline(x, y, bc_type='natural')
+            a.scatter(x, y[i], c=Var.color)
+            f = CubicSpline(x, y[i], bc_type='natural')
             x_new = np.linspace(0, len(dates), 1000)
             y_new = f(x_new)
             a.plot(x_new, y_new, c=Var.color, linestyle='--')
         else:
-            a.plot(dates, y, c=Var.color, linestyle='--')
+            a.plot(dates, y[i], c=Var.color, linestyle='--')
 
         a.set_ylabel(Var.label(), fontsize=15)
         a.yaxis.label.set_color(Var.color)
         a.tick_params(axis='y', colors=Var.color, labelsize=15)
+        i += 1
+
     ax.tick_params(axis='x', labelsize=15)
+    title += f' R = {np.corrcoef(y[0], y[1])[0, 1]}'
     ax.set_title(title, fontsize=15)
 
     show_plot(fig, f'./plots/{var1}_{var2}_{ds.string_time_to_datetime(date1)}_'
@@ -273,11 +263,11 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
 
 
 if __name__ == '__main__':
-    # regional_lead_plot('20200219', show=True, variable=['cyclone_occurence', 'msl'], plot_leads=True)
+    # regional_var_plot('20200219', show=True, variable=['cyclone_occurence', 'msl'], plot_leads=True)
     # variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
-    # variables_against_time('20200101', '20200331', arctic_extent, 'leads', 'cyclone_occurence')
-    # variables_against_time('20200101', '20200331', barent_extent, 'leads', 'cyclone_occurence')
+    variables_against_time('20200101', '20200331', ci.arctic_extent, 'leads', 'cyclone_occurence')
+    # variables_against_time('20200101', '20200115', ci.arctic_extent, 'leads', 'siconc')
     # variables_against_time('20200101', '20200331', s_extent, 'leads', 'cyclone_occurence')
-    matrix_plot('20200320', '20200325', 'leads', extent=ci.s_extent, show=True)
+    #matrix_plot('20200320', '20200325', 'leads', extent=ci.s_extent, show=True)
     # plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')
     pass

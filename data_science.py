@@ -166,6 +166,24 @@ def lead_monthly_average(year, month, extent):
     return dates
 
 
+def variable_daily_avg(date1, date2, extent, variable):
+    # This returns an array that contains the daily average values of your variable data.
+    dates = time_delta(date1, date2)
+    var_sum = np.zeros(len(dates))
+    for i, date in enumerate(dates):
+        print(date)
+        if variable == 'leads':
+            var = lead_average(date, date, extent)
+        else:
+            var = variable_average(date, date, extent, variable)
+        var_sum[i] = np.nanmean(var)
+    return var_sum
+
+
+def lead_from_var(date1, date2, extent, var1, var2):
+    pass
+
+
 if __name__ == '__main__':
     #lead_hist('20200218')
     case1 = ['20200216', '20200217', '20200218', '20200219', '20200220', '20200221', '20200222']
