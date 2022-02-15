@@ -1,4 +1,6 @@
 import datetime
+
+import matplotlib
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import leads
@@ -36,10 +38,10 @@ class VarOptions:
         return f'{self.name} in {self.unit}' + extra_label
 
 
-
 def setup_plot(extent):
     # create figure and base map
-    fig, ax = plt.subplots(figsize=(15, 10))
+    fig, ax = plt.subplots()
+    fig.set_size_inches(32, 18)
     ax = plt.axes(projection=ccrs.NorthPolarStereo(-45))
     ax.gridlines()
     ax.set_global()
@@ -53,8 +55,9 @@ def show_plot(fig, file_name, show):
     # Decides if the figure is shown or saved.
     if show:
         plt.show()
-    plt.savefig(file_name)
-    plt.close(fig)
+    else:
+        plt.savefig(file_name, bbox_inches='tight')
+        plt.close(fig)
 
 
 def regional_lead_plot(date, extent=None, show=False, variable=None, plot_leads=True):
@@ -74,7 +77,7 @@ def regional_lead_plot(date, extent=None, show=False, variable=None, plot_leads=
     if plot_leads:
         lead_plot(grid, lead, fig, ax)
 
-    # plot variable data with colorbar
+    # plot variable data with color-bar
     if variable:
         if isinstance(variable, list):
             for v in variable:
@@ -101,7 +104,7 @@ def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False, ms
     # setup data
     lead1 = leads.Lead(date1)
     lead2 = leads.Lead(date2)
-    grid = leads.CoordinateGrid(lead1)
+    grid = leads.CoordinateGrid()
 
     # setup plot
     fig, ax = setup_plot(extent)
@@ -139,8 +142,8 @@ def lead_plot(grid, lead, fig, ax):
 def variable_plot(date, fig, ax, variable):
     # Plots data that is stored in a Era5 grid.
     Var = VarOptions(variable)
-    # data_set = leads.Era5(variable)
-    data_set = leads.Era5Regrid(leads.Lead(date), variable) # With this Era5Regrid-class is tested
+    data_set = leads.Era5(variable)
+    # data_set = leads.Era5Regrid(leads.Lead(date), variable) # With this Era5Regrid-class is tested
 
     if Var.contour:
         contours = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=Var.cmap,
@@ -171,13 +174,13 @@ def matrix_plot(date1, date2, variable, cmap='RdYlGn', clim=(None, None), extent
 
 
 def variable_daily_avg(date1, date2, extent, variable):
-    # This returns a narray that contains the daily average values of your variable data.
+    # This returns an array that contains the daily average values of your variable data.
     dates = ds.time_delta(date1, date2)
     var_sum = np.zeros(len(dates))
     for i, date in enumerate(dates):
         print(date)
         if variable == 'leads':
-            var = 100*ds.lead_average(date, date, extent)
+            var = 100 * ds.lead_average(date, date, extent)
         else:
             var = ds.variable_average(date, date, extent, variable)
         var_sum[i] = np.nanmean(var)
@@ -198,10 +201,10 @@ def variable_avg_sum_daily(date1, date2, extent, variables):
     plt.show()
 
 
-def variables_against_time(date1, date2, extent, var1, var2, spline=False):
+def variables_against_time(date1, date2, extent, var1, var2, spline=False, show=False):
     # This shows you how two variables change with respect to time.
     dates = ds.string_time_to_datetime(ds.time_delta(date1, date2))
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(20, 10))
     ax_twin = ax.twinx()
     Var1, Var2 = VarOptions(var1), VarOptions(var2)
     title = f'Changes in {Var1.name} and {Var2.name} over time within {extent}.'
@@ -225,7 +228,9 @@ def variables_against_time(date1, date2, extent, var1, var2, spline=False):
         a.tick_params(axis='y', colors=Var.color, labelsize=15)
     ax.tick_params(axis='x', labelsize=15)
     ax.set_title(title, fontsize=15)
-    plt.show()
+
+    show_plot(fig, f'./plots/{var1}_{var2}_{ds.string_time_to_datetime(date1)}_'
+                   f'{ds.string_time_to_datetime(date2)}_{extent}.png', show)
 
 
 def plot_lead_cyclone_sum_monthly(date1, date2, extent, variable):
@@ -268,26 +273,11 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
 
 
 if __name__ == '__main__':
-    # TODO: sinnvollen extent für die Barentsee definieren
-    # TODO: Methode zum automatischen abspeichern der Plots erstellen
-    # TODO: Plots erstellen für den gesammten Zeitraum, für verschiedene Extents, speziell für unsere Zyklonenevents
-    case1 = ['20200216', '20200217', '20200218', '20200219', '20200220', '20200221', '20200222']
-    extent1 = (60, 0, 80, 75)
-    case2 = ['20200114', '20200115', '20200116', '20200117', '20200118', '20200119', '20200120']
-    extent2 = [80, 0, 80, 75]
-    case3 = ['20200128', '20200129', '20200130', '20200131', '20200201', '20200202', '20200203']
-    extent3 = [70, -10, 90, 70]
-    case4 = ['20200308', '20200309', '20200310', '20200311', '20200312', '20200313', '20200314', '20200315', '20200316']
-    extent4 = [65, 0, 80, 75]
-
-    #regional_lead_plot('20200221', show=True, variable='siconc', plot_leads=True)
-
-    extent = [65, 0, 80, 71]
-    s_extent = [180, -180, 90, 85]
-    no_extent = [180, -180, 90, 60]
-    #variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
-    variables_against_time('20200210', '20200229', extent, 'leads', 'cyclone_occurence')
-
-    #matrix_plot(ds.lead_average('20200112', '20200118', no_extent), extent=no_extent)
-    #matrix_plot('20200316', '20200322', 'leads', cmap='inferno', extent=no_extent, show=False)
-    #plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')
+    # regional_lead_plot('20200219', show=True, variable=['cyclone_occurence', 'msl'], plot_leads=True)
+    # variable_avg_sum_daily('20200101', '20200331', no_extent, ('msl', 'cyclone_occurence'))
+    # variables_against_time('20200101', '20200331', arctic_extent, 'leads', 'cyclone_occurence')
+    # variables_against_time('20200101', '20200331', barent_extent, 'leads', 'cyclone_occurence')
+    # variables_against_time('20200101', '20200331', s_extent, 'leads', 'cyclone_occurence')
+    # matrix_plot('20200320', '20200325', 'leads', extent=arctic_extent, show=True)
+    # plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')
+    pass
