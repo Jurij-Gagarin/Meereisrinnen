@@ -18,3 +18,5 @@
 /data/ERA5_T2m_2020_JanApr_new.nc
 /data/ERA5_SIC_2020_JanApr.nc
 /data/ERA5_SIC_regrid_bil.nc
+/data/ERA5_Wind.nc
+/data/ERA5_Wind_2019_NovDec.nc

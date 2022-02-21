@@ -17,9 +17,9 @@ class VarOptions:
         # Dictionaries that assign colors, cmaps, ... to certain variables
         contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False,
                         'siconc': False}
-        cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'Greys_r', 'wind': 'cividis', 't2m': 'coolwarm',
+        cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'gray', 'wind': 'cividis', 't2m': 'coolwarm',
                      'leads': 'inferno', 'siconc': 'Blues'}
-        alpha_dict = {'msl': 1, 'cyclone_occurence': .25, 'wind': 1, 't2m': 1, 'leads': 1, 'siconc': 1}
+        alpha_dict = {'msl': 1, 'cyclone_occurence': .15, 'wind': 1, 't2m': 1, 'leads': 1, 'siconc': 1}
         color_dict = {'msl': 'red', 'leads': 'blue', 'wind': 'orange', 'cyclone_occurence': 'green', 't2m': 'purple',
                       'siconc': 'turquoise'}
         unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K', 'siconc': '%'}
@@ -40,13 +40,16 @@ class VarOptions:
 
 class RegionalPlot:
     # Note that n * 10 can bee plotted perfectly fine
-    def __init__(self, date1, date2, variable, extent=ci.arctic_extent, fig_shape=(2, 5), show=False):
+    def __init__(self, date1, date2, variable, extent=ci.arctic_extent, fig_shape=(2, 5), show=False, show_cbar=True):
         self.fig_shape = fig_shape
         self.extent = extent
         self.dates = ds.time_delta(date1, date2)
         self.show = show
         self.variable = variable
         self.plot_leads = False
+        self.show_cbar = show_cbar
+        images = None
+
         for var in self.variable:
             if var == 'leads':
                 self.variable.remove('leads')
@@ -61,21 +64,25 @@ class RegionalPlot:
             for j, a in enumerate(ax.flatten()):
                 date = self.dates[j + self.fig_shape[0] * self.fig_shape[1] * i]
                 print(date)
-                self.regional_var_plot(fig, a, date)
+                images = self.regional_var_plot(fig, a, date)
 
-            show_plot(fig, f'./test{i}.png', self.show)
+            if images:
+                for im in images:
+                    cbar = fig.colorbar(im, ax=ax.flatten())
+                    cbar.ax.tick_params(labelsize=20)
+
+            show_plot(fig, f'./plots/{self.dates[self.fig_shape[0] * self.fig_shape[1] * i]}_'
+                           f'{self.dates[self.fig_shape[0] * self.fig_shape[1] * (i + 1)]}.png', self.show)
 
     def setup_plot(self, base):
         # create figure and base map
-        fig, ax = plt.subplots(self.fig_shape[0], self.fig_shape[1], figsize=(20, 15),
-                               subplot_kw={"projection": ccrs.NorthPolarStereo(-45)})
-        # fig.set_size_inches(32, 18)
-        print(ax.flatten())
+        fig, ax = plt.subplots(self.fig_shape[0], self.fig_shape[1],
+                               subplot_kw={"projection": ccrs.NorthPolarStereo(-45)}, constrained_layout=True)
+        fig.set_size_inches(32, 18)
         for i, a in enumerate(ax.flatten()):
-            a.set_title(ds.string_time_to_datetime(self.dates[i + self.fig_shape[0] * self.fig_shape[1] * base]))
-            a.gridlines()
-            a.set_global()
-            a.coastlines(resolution='50m')
+            a.set_title(ds.string_time_to_datetime(self.dates[i + self.fig_shape[0] * self.fig_shape[1] * base]),
+                        fontsize=20)
+            a.coastlines(resolution='110m')
             a.set_extent(self.extent, crs=ccrs.PlateCarree())
         return fig, ax
 
@@ -83,18 +90,22 @@ class RegionalPlot:
         # setup data
         lead = leads.Lead(date)
         grid = leads.CoordinateGrid()
+        im = []
 
         # plot lead data
         if self.plot_leads:
-            lead_plot(grid, lead, fig, ax, False)
+            im.append(lead_plot(grid, lead, fig, ax, False))
 
         # plot variable data
         if self.variable:
             if isinstance(self.variable, list):
                 for v in self.variable:
+                    # im.append(variable_plot(date, fig, ax, v, False))
                     variable_plot(date, fig, ax, v, False)
             else:
-                variable_plot(date, fig, ax, self.variable, False)
+                im = variable_plot(date, fig, ax, self.variable, False)
+
+        return im
 
 
 def setup_plot(extent):
@@ -196,13 +207,15 @@ def lead_plot(grid, lead, fig, ax, show_cbar):
     ax.pcolormesh(grid.lon, grid.lat, lead.cloud, cmap='Blues', transform=ccrs.PlateCarree())
     if show_cbar:
         cbar = fig.colorbar(im, ax=ax)
-        cbar.ax.tick_params(labelsize=17)
+        cbar.ax.tick_params(labelsize=20)
+    return im
 
 
 def variable_plot(date, fig, ax, variable, show_cbar):
     # Plots data that is stored in a Era5 grid.
     Var = VarOptions(variable)
     data_set = leads.Era5(variable)
+    im = None
     # data_set = leads.Era5Regrid(leads.Lead(date), variable) # With this Era5Regrid-class is tested
 
     if Var.contour:
@@ -215,7 +228,9 @@ def variable_plot(date, fig, ax, variable, show_cbar):
         # im.set_clim(0, 25)
         if show_cbar:
             cbar = fig.colorbar(im, ax=ax)
-            cbar.ax.tick_params(labelsize=17)
+            cbar.ax.tick_params(labelsize=20)
+    if im:
+        return im
 
 
 def matrix_plot(date1, date2, variable, clim=(None, None), extent=None, show=False):
@@ -341,10 +356,10 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
 
 
 if __name__ == '__main__':
-    # regional_var_plot('20200219', show=True, variable=['cyclone_occurence', 'msl'], plot_leads=True,
-                      # extent=ci.extent1, show_cbar=False)
+    regional_var_plot('20200101', show=True, variable=['msl'], plot_leads=True,
+                      extent=ci.extent1, show_cbar=True)
 
-    RegionalPlot('20200215', '20200225', ['leads', 'msl', 'cyclone_occurence'], extent=ci.barent_extent, show=True)
+    #RegionalPlot('20191102', '20200430', ['leads', 'cyclone_occurence'], extent=ci.extent1, show=False)
 
     # matrix_plot('20200320', '20200325', 'leads', extent=ci.s_extent, show=True)
     # plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')

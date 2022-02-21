@@ -68,15 +68,21 @@ class Era5:
     def __init__(self, variable):
         # import air pressure data
         self.var = variable
-        variable_dict = {'msl': 'data/ERA5_MSLP_2020_JanApr.nc', 'wind': 'data/ERA5_Wind_2020_JanApr.nc',
-                         't2m': 'data/ERA5_T2m_2020_JanApr_new.nc', 'siconc': 'data/ERA5_SIC_2020_JanApr.nc',
-                         'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new.nc'}
+        variable_dict = {'msl': 'data/ERA5_MSLP_2020_JanApr.nc', 'wind': 'data/ERA5_meta_1920.nc',
+                         't2m': 'data/ERA5_T2m_2020_JanApr_new.nc', 'siconc': 'data/ERA5_meta_1920.nc',
+                         'cyclone_occurence': 'data/cyc_time.nc', 'wind_quiver': 'data/ERA5_Wind_2020_JanApr.nc'}
 
         path = variable_dict[self.var]
         data_set = nc.Dataset(path)
 
         # Assign variables
-        self.variable = data_set.variables[self.var]
+        if self.var == 'wind_quiver':
+            self.u10 = data_set.variables['u10']
+            self.v10 = data_set.variables['v10']
+            print(self.u10)
+            print(self.v10)
+        else:
+            self.variable = data_set.variables[self.var]
         self.time = data_set['time']
 
         # Build grid matrix
@@ -96,13 +102,28 @@ class Era5:
             mean_var = np.add(mean_var, self.variable[t])
         return ds.variable_manip(self.var, .25 * mean_var)
 
+    def get_quiver(self, date):
+        # Get time index
+        # datetime(year, month, day, hour, minute, second, microsecond)
+        d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
+        d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
+        t1, t2 = cftime.date2index([d1, d2], self.time)
+
+        # Calculate mean variable of the given date
+        mean_v10 = np.zeros(self.v10[0].shape)
+        mean_u10 = np.zeros(self.u10[0].shape)
+        for t in range(t1, t2 + 1):
+            mean_v10 = np.add(mean_v10, self.v10[t])
+            mean_u10 = np.add(mean_u10, self.u10[t])
+        return .25 * mean_v10, .25 * mean_u10
+
 
 class Era5Regrid:
     def __init__(self, lead, variable):
         # import air pressure data
-        variable_dict = {'msl': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_2020_Wind_regrid_bil.nc',
-                         't2m': 'data/ERA5_2020_T2m_regrid_bil.nc', 'siconc': 'data/ERA5_SIC_regrid_bil.nc',
-                         'cyclone_occurence': 'data/Cyclone_Occurence_all_2019_2020_new_regrid_bil.nc'}
+        variable_dict = {'msl': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_meta_1920_regrid.nc',
+                         't2m': 'data/ERA5_2020_T2m_regrid_bil.nc', 'siconc': 'data/ERA5_meta_1920_regrid.nc',
+                         'cyclone_occurence': 'data/cyc_time_regrid.nc'}
 
         self.var = variable
         path = variable_dict[self.var]
@@ -133,7 +154,11 @@ class Era5Regrid:
 
 
 if __name__ == '__main__':
-    Lead('20191101').new_leads()
+    #Era5('msl')
+    #Era5('siconc')
+    #Era5('t2m')
+    Era5('wind_quiver').get_quiver('20200101')
+    #Era5('cyclone_occurence')
     pass
 
 
