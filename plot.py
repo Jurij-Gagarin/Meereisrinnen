@@ -9,6 +9,8 @@ import calendar
 from dateutil.rrule import rrule, MONTHLY
 from scipy.interpolate import CubicSpline
 import helpful_functions as hf
+from skimage.transform import resize
+import matplotlib.cm as cm
 
 
 class VarOptions:
@@ -16,16 +18,20 @@ class VarOptions:
         self.var = var
         # Dictionaries that assign colors, cmaps, ... to certain variables
         contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False,
-                        'siconc': False}
+                        'siconc': False, 'wind_quiver': False}
         cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'gray', 'wind': 'cividis', 't2m': 'coolwarm',
-                     'leads': 'inferno', 'siconc': 'Blues'}
-        alpha_dict = {'msl': 1, 'cyclone_occurence': .15, 'wind': 1, 't2m': 1, 'leads': 1, 'siconc': 1}
+                     'leads': 'inferno', 'siconc': 'Blues', 'wind_quiver':None}
+        alpha_dict = {'msl': 1, 'cyclone_occurence': .15, 'wind': 1, 't2m': 1, 'leads': 1, 'siconc': 1, 'wind_quiver': 1
+                      }
         color_dict = {'msl': 'red', 'leads': 'blue', 'wind': 'orange', 'cyclone_occurence': 'green', 't2m': 'purple',
-                      'siconc': 'turquoise'}
-        unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K', 'siconc': '%'}
+                      'siconc': 'turquoise', 'wind_quiver': None}
+        unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K', 'siconc': '%',
+                     'wind_quiver': None}
         name_dict = {'cyclone_occurence': 'cyclone frequency', 'leads': 'daily new lead fraction', 'wind': 'wind speed',
-                     't2m': 'two meter temperature', 'msl': 'mean sea level pressure', 'siconc': 'sea ice concentration'
-                     }
+                     't2m': 'two meter temperature', 'msl': 'mean sea level pressure', 'siconc': 'sea ice concentration',
+                     'wind_quiver': None}
+        quiver_dict = {'msl': False, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False,
+                       'siconc': False, 'wind_quiver': True}
 
         self.contour = contour_plot[self.var]
         self.cmap = cmap_dict[self.var]
@@ -33,6 +39,7 @@ class VarOptions:
         self.color = color_dict[self.var]
         self.unit = unit_dict[self.var]
         self.name = name_dict[self.var]
+        self.quiver = quiver_dict[self.var]
 
     def label(self, extra_label=''):
         return f'{self.name} in {self.unit}' + extra_label
@@ -48,7 +55,7 @@ class RegionalPlot:
         self.variable = variable
         self.plot_leads = False
         self.show_cbar = show_cbar
-        images = None
+        images = []
 
         for var in self.variable:
             if var == 'leads':
@@ -67,12 +74,15 @@ class RegionalPlot:
                 images = self.regional_var_plot(fig, a, date)
 
             if images:
+                print(images)
                 for im in images:
-                    cbar = fig.colorbar(im, ax=ax.flatten())
-                    cbar.ax.tick_params(labelsize=20)
+                    print(im)
+                    if im:
+                        cbar = fig.colorbar(im, ax=ax.ravel().toList)
+                        cbar.ax.tick_params(labelsize=20)
 
             show_plot(fig, f'./plots/{self.dates[self.fig_shape[0] * self.fig_shape[1] * i]}_'
-                           f'{self.dates[self.fig_shape[0] * self.fig_shape[1] * (i + 1)]}.png', self.show)
+                           f'{self.dates[self.fig_shape[0] * self.fig_shape[1] * (i + 1) - 1]}.png', self.show)
 
     def setup_plot(self, base):
         # create figure and base map
@@ -100,12 +110,12 @@ class RegionalPlot:
         if self.variable:
             if isinstance(self.variable, list):
                 for v in self.variable:
-                    # im.append(variable_plot(date, fig, ax, v, False))
+                    im.append(variable_plot(date, fig, ax, v, False))
                     variable_plot(date, fig, ax, v, False)
             else:
-                im = variable_plot(date, fig, ax, self.variable, False)
+                im.append(variable_plot(date, fig, ax, self.variable, False))
 
-        return im
+        return im  # returns an Image for the colorbar
 
 
 def setup_plot(extent):
@@ -214,17 +224,26 @@ def lead_plot(grid, lead, fig, ax, show_cbar):
 def variable_plot(date, fig, ax, variable, show_cbar):
     # Plots data that is stored in a Era5 grid.
     Var = VarOptions(variable)
-    data_set = leads.Era5(variable)
     im = None
-    # data_set = leads.Era5Regrid(leads.Lead(date), variable) # With this Era5Regrid-class is tested
+    if variable == 'wind_quiver':
+        data_set = leads.Era5Regrid(leads.Lead(date), 'wind_quiver') # With this Era5Regrid-class is tested
+    else:
+        data_set = leads.Era5(variable)
 
     if Var.contour:
-        contours = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=Var.cmap,
+        im = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=Var.cmap,
                               alpha=Var.alpha, transform=ccrs.PlateCarree(), levels=10)
-        ax.clabel(contours, inline=True, fontsize=15, inline_spacing=10)
+        ax.clabel(im, inline=True, fontsize=15, inline_spacing=10)
+    elif Var.quiver:
+        lat_dir, lon_dir = data_set.get_quiver(date)
+        dim = (50, 50)
+        lon, lat = resize(data_set.lon, dim), resize(data_set.lat, dim)
+        v10, u10 = resize(lon_dir, dim), resize(lat_dir, dim)
+        im = ax.quiver(lon, lat, v10, u10, np.sqrt(v10**2+u10**2), transform=ccrs.PlateCarree(), cmap='plasma',
+                       width=.005, pivot='mid')  # scale=40, scale_units='inches'
     else:
-        im = ax.pcolormesh(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=Var.cmap,
-                           alpha=Var.alpha, transform=ccrs.PlateCarree())
+        im = ax.pcolormesh(data_set.lon, data_set.lat, data_set.get_variable(date),alpha=Var.alpha, cmap=Var.cmap,
+                           transform=ccrs.PlateCarree())
         # im.set_clim(0, 25)
         if show_cbar:
             cbar = fig.colorbar(im, ax=ax)
@@ -356,10 +375,10 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
 
 
 if __name__ == '__main__':
-    regional_var_plot('20200101', show=True, variable=['msl'], plot_leads=True,
-                      extent=ci.extent1, show_cbar=True)
+    #regional_var_plot('20200223', show=True, variable=['msl', 'wind_quiver'], plot_leads=True,
+                      #extent=ci.extent1, show_cbar=True)
 
-    #RegionalPlot('20191102', '20200430', ['leads', 'cyclone_occurence'], extent=ci.extent1, show=False)
+    RegionalPlot('20200110', '20200430', ['leads'], extent=ci.extent1, show=True)
 
     # matrix_plot('20200320', '20200325', 'leads', extent=ci.s_extent, show=True)
     # plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')

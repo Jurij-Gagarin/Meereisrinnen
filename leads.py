@@ -123,7 +123,8 @@ class Era5Regrid:
         # import air pressure data
         variable_dict = {'msl': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_meta_1920_regrid.nc',
                          't2m': 'data/ERA5_2020_T2m_regrid_bil.nc', 'siconc': 'data/ERA5_meta_1920_regrid.nc',
-                         'cyclone_occurence': 'data/cyc_time_regrid.nc'}
+                         'cyclone_occurence': 'data/cyc_time_regrid.nc',
+                         'wind_quiver': 'data/ERA5_Wind_2020_JanApr_regrid.nc'}
 
         self.var = variable
         path = variable_dict[self.var]
@@ -134,7 +135,12 @@ class Era5Regrid:
         self.time = data_set['time']
         self.lon = np.reshape(data_set.variables['lon'], self.shape)
         self.lat = np.reshape(data_set.variables['lat'], self.shape)
-        self.variable = data_set.variables[self.var]
+
+        if self.var == 'wind_quiver':
+            self.u10 = data_set.variables['u10']
+            self.v10 = data_set.variables['v10']
+        else:
+            self.variable = data_set.variables[self.var]
 
         #self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
         #self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
@@ -151,6 +157,21 @@ class Era5Regrid:
             #add_msl = ds.clear_matrix(add_msl, self.lead.del_row, self.lead.del_col)
             mean_variable = np.add(mean_variable, add_msl)
         return ds.variable_manip(self.var, .25 * mean_variable)
+
+    def get_quiver(self, date):
+        d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
+        d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
+        t1, t2 = cftime.date2index([d1, d2], self.time)
+
+        new_shape = self.lon.shape
+        mean_v10 = np.zeros(new_shape)
+        mean_u10 = np.zeros(new_shape)
+        for t in range(t1, t2 + 1):
+            add_v10 = np.reshape(self.v10[t], self.shape)
+            add_u10 = np.reshape(self.u10[t], self.shape)
+            mean_v10 = np.add(mean_v10, add_v10)
+            mean_u10 = np.add(mean_u10, add_u10)
+        return .25 * mean_v10, .25 * mean_u10
 
 
 if __name__ == '__main__':
