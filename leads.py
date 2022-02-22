@@ -79,8 +79,6 @@ class Era5:
         if self.var == 'wind_quiver':
             self.u10 = data_set.variables['u10']
             self.v10 = data_set.variables['v10']
-            print(self.u10)
-            print(self.v10)
         else:
             self.variable = data_set.variables[self.var]
         self.time = data_set['time']

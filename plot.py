@@ -10,7 +10,6 @@ from dateutil.rrule import rrule, MONTHLY
 from scipy.interpolate import CubicSpline
 import helpful_functions as hf
 from skimage.transform import resize
-import matplotlib.cm as cm
 
 
 class VarOptions:
@@ -20,16 +19,16 @@ class VarOptions:
         contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False,
                         'siconc': False, 'wind_quiver': False}
         cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'gray', 'wind': 'cividis', 't2m': 'coolwarm',
-                     'leads': 'inferno', 'siconc': 'Blues', 'wind_quiver':None}
+                     'leads': 'cool', 'siconc': 'Blues', 'wind_quiver': 'inferno'}
         alpha_dict = {'msl': 1, 'cyclone_occurence': .15, 'wind': 1, 't2m': 1, 'leads': 1, 'siconc': 1, 'wind_quiver': 1
                       }
         color_dict = {'msl': 'red', 'leads': 'blue', 'wind': 'orange', 'cyclone_occurence': 'green', 't2m': 'purple',
                       'siconc': 'turquoise', 'wind_quiver': None}
         unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K', 'siconc': '%',
-                     'wind_quiver': None}
+                     'wind_quiver': 'm/s'}
         name_dict = {'cyclone_occurence': 'cyclone frequency', 'leads': 'daily new lead fraction', 'wind': 'wind speed',
                      't2m': 'two meter temperature', 'msl': 'mean sea level pressure', 'siconc': 'sea ice concentration',
-                     'wind_quiver': None}
+                     'wind_quiver': 'windspeed'}
         quiver_dict = {'msl': False, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False,
                        'siconc': False, 'wind_quiver': True}
 
@@ -378,7 +377,7 @@ if __name__ == '__main__':
     #regional_var_plot('20200223', show=True, variable=['msl', 'wind_quiver'], plot_leads=True,
                       #extent=ci.extent1, show_cbar=True)
 
-    RegionalPlot('20200110', '20200430', ['leads'], extent=ci.extent1, show=True)
+    RegionalPlot('20200101', '20200111', ['leads'], extent=ci.extent1, show=True)
 
     # matrix_plot('20200320', '20200325', 'leads', extent=ci.s_extent, show=True)
     # plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')
