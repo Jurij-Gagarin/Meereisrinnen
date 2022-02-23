@@ -82,6 +82,7 @@ class Era5:
         else:
             self.variable = data_set.variables[self.var]
         self.time = data_set['time']
+        self.siconc_avg = None
 
         # Build grid matrix
         self.lon = np.tile(data_set['longitude'][:], (161, 1))
@@ -114,6 +115,17 @@ class Era5:
             mean_v10 = np.add(mean_v10, self.v10[t])
             mean_u10 = np.add(mean_u10, self.u10[t])
         return .25 * mean_v10, .25 * mean_u10
+
+    def get_siconc_diff(self, date1, date2):
+        dates = ds.time_delta(date1, date2)
+
+        avg = np.zeros(self.variable[0].shape)
+        for date in dates:
+            avg += self.get_variable(date)
+
+        self.siconc_avg = avg / len(dates)
+
+
 
 
 class Era5Regrid:
@@ -176,8 +188,10 @@ if __name__ == '__main__':
     #Era5('msl')
     #Era5('siconc')
     #Era5('t2m')
-    Era5('wind_quiver').get_quiver('20200101')
+    #Era5('wind_quiver').get_quiver('20200101')
     #Era5('cyclone_occurence')
+
+
     pass
 
 
