@@ -104,7 +104,7 @@ def select_area(grid, lead, matrix, points):
     mask = mask_lon_a & mask_lat_b & mask_lat_a & mask_lon_b & mask_land & mask_water & mask_cloud
     matrix[mask == False] = None
 
-    return lon, lat, matrix
+    return lon, lat, matrix, mask
 
 
 def variable_average(date1, date2, extent, variable, filter_data=False):
