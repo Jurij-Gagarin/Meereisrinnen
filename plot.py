@@ -5,6 +5,7 @@ import leads
 import data_science as ds
 import numpy as np
 import helpful_functions as hf
+from scipy.stats import gaussian_kde
 
 
 def show_plot(fig, file_name, show):
@@ -343,37 +344,45 @@ def variable_pixel_pixel(date1, date2, extent):
     plt.show()
 
 
-def variable_pixel_pixel_density(date1, date2, extent, cyc):
+def variable_pixel_pixel_density(date1, date2, extent):
     dates = ds.time_delta(date1, date2)
-    fig, ax = plt.subplots()
-    im = None
+    fig, axs = plt.subplots(2, 2)
     lead_dummy = leads.Lead('20200101')
     mask = ds.select_area(leads.CoordinateGrid(), lead_dummy, lead_dummy.lead_frac, extent)[3]
 
-    for date in dates:
-        print(date)
-        lead = leads.Lead(date)
-        cyc = leads.Era5Regrid(lead, 'cyclone_occurence').get_variable(date)[mask]
-        sic = leads.Era5Regrid(lead, 'siconc').get_variable(date)[mask]
-        lead = lead.new_leads()[mask]
+    for ax, cyc_freq in zip(axs.flatten(), [0, 25, 50, 75]):
+        print(cyc_freq)
+        x = np.array([])
+        y = np.array([])
+        for date in dates:
+            print(date)
+            lead = leads.Lead(date)
+            cyc = leads.Era5Regrid(lead, 'cyclone_occurence').get_variable(date)[mask]
+            cyc_mask = cyc == cyc_freq
+            cyc = cyc[cyc_mask]
+            sic = leads.Era5Regrid(lead, 'siconc').get_variable(date)[mask][cyc_mask]
+            lead = lead.lead_data()[mask][cyc_mask]
+            lead, cyc, sic = hf.filter_by_sic(lead, cyc, sic, 90)
 
-        lead, cyc, sic = hf.filter_by_sic(lead, cyc, sic, 85)
-        #im = ax.scatter(lead, sic, c=cyc, cmap='jet')
-        mask25 = cyc == 25
-        mask0 = cyc == 0
-        bins = 30
+            x = np.hstack((x, sic))
+            y = np.hstack((y, lead))
 
-        im = ax.scatter(sic, lead, c=cyc, cmap='jet', s=25, alpha=.75, vmin=0.0, vmax=100.0)
-    fig.colorbar(im)
+        # Calculate the point density
+        print(y)
+        rm_nan = ~np.isnan(y)
+        x, y = x[rm_nan], y[rm_nan]
+        xy = np.vstack([x, y])
+        z = gaussian_kde(xy)(xy)
 
-    #ax.hist(lead[mask0], bins=bins, density=True, alpha=.5)
-    #ax.hist(lead[mask25], bins=bins, density=True, alpha=.5)
+        # Sort the points by density, so that the densest points are plotted last
+        idx = z.argsort()
+        x, y, z = x[idx], y[idx], z[idx]
+        im = ax.scatter(x, y, c=z, s=25)
+        ax.set_xlabel('SIC in %')
+        ax.set_ylabel('new leads in %')
+        ax.set_title(f'cyclone frequency = {cyc_freq}')
+        fig.colorbar(im, ax=ax)
 
-    #fig.colorbar(im, ax=ax)
-    ax.set_xlabel('SIC in %')
-    ax.set_ylabel('new leads in %')
-    ax.set_title(f'New leads against SIC pixel by pixel from {ds.string_time_to_datetime(date1)} to '
-                 f'{ds.string_time_to_datetime(date2)}')
     plt.show()
 
 
@@ -459,6 +468,6 @@ if __name__ == '__main__':
     pass
     '''
     #,variables_against_time('20200214', '20200224', ci.barent_extent, 'leads', 'cyclone_occurence', show=True)
-    variable_pixel_pixel('202002017', '20200221', ci.barent_extent)
+    variable_pixel_pixel_density('202002017', '20200221', ci.barent_extent)
     # variables_against_time('20200120', '20200210', ci.arctic_extent, 'leads', 'siconc')
     pass
