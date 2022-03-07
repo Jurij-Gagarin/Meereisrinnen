@@ -327,14 +327,53 @@ def variable_pixel_pixel(date1, date2, extent):
         #im = ax.scatter(lead, sic, c=cyc, cmap='jet')
         mask25 = cyc == 25
         mask0 = cyc == 0
-        ax.hist(lead[mask0], bins=30, density=True, alpha=.5)
-        ax.hist(lead[mask25], bins=30, density=True, alpha=.5)
+        bins = 30
+
+        im = ax.scatter(sic, lead, c=cyc, cmap='jet', s=25, alpha=.75, vmin=0.0, vmax=100.0)
+    fig.colorbar(im)
+
+        #ax.hist(lead[mask0], bins=bins, density=True, alpha=.5)
+        #ax.hist(lead[mask25], bins=bins, density=True, alpha=.5)
 
     #fig.colorbar(im, ax=ax)
-    #ax.set_xlabel('new leads in %')
-    #ax.set_ylabel('SIC in %')
-    #ax.set_title(f'New leads against SIC pixel by pixel from {ds.string_time_to_datetime(date1)} to '
-                 #f'{ds.string_time_to_datetime(date2)}')
+    ax.set_xlabel('SIC in %')
+    ax.set_ylabel('new leads in %')
+    ax.set_title(f'New leads against SIC pixel by pixel from {ds.string_time_to_datetime(date1)} to '
+                 f'{ds.string_time_to_datetime(date2)}')
+    plt.show()
+
+
+def variable_pixel_pixel_density(date1, date2, extent, cyc):
+    dates = ds.time_delta(date1, date2)
+    fig, ax = plt.subplots()
+    im = None
+    lead_dummy = leads.Lead('20200101')
+    mask = ds.select_area(leads.CoordinateGrid(), lead_dummy, lead_dummy.lead_frac, extent)[3]
+
+    for date in dates:
+        print(date)
+        lead = leads.Lead(date)
+        cyc = leads.Era5Regrid(lead, 'cyclone_occurence').get_variable(date)[mask]
+        sic = leads.Era5Regrid(lead, 'siconc').get_variable(date)[mask]
+        lead = lead.new_leads()[mask]
+
+        lead, cyc, sic = hf.filter_by_sic(lead, cyc, sic, 85)
+        #im = ax.scatter(lead, sic, c=cyc, cmap='jet')
+        mask25 = cyc == 25
+        mask0 = cyc == 0
+        bins = 30
+
+        im = ax.scatter(sic, lead, c=cyc, cmap='jet', s=25, alpha=.75, vmin=0.0, vmax=100.0)
+    fig.colorbar(im)
+
+    #ax.hist(lead[mask0], bins=bins, density=True, alpha=.5)
+    #ax.hist(lead[mask25], bins=bins, density=True, alpha=.5)
+
+    #fig.colorbar(im, ax=ax)
+    ax.set_xlabel('SIC in %')
+    ax.set_ylabel('new leads in %')
+    ax.set_title(f'New leads against SIC pixel by pixel from {ds.string_time_to_datetime(date1)} to '
+                 f'{ds.string_time_to_datetime(date2)}')
     plt.show()
 
 
@@ -402,9 +441,11 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True):
 
 
 if __name__ == '__main__':
+    '''
     for date in ds.time_delta('20200213', '20200224'):
         regional_var_plot(date, show=False, variable=['msl', 'wind_quiver'], plot_leads=True,
                           extent=ci.extent1, show_cbar=True)
+    '''
 
     #RegionalPlot('20200213', '20200322', ['leads', 'msl', 'wind_quiver'], extent=ci.extent1, show=True)
 
@@ -417,7 +458,7 @@ if __name__ == '__main__':
         variables_against_time(d[0], d[1], ci.arctic_extent, 'leads', 'siconc')
     pass
     '''
-    pass
     #,variables_against_time('20200214', '20200224', ci.barent_extent, 'leads', 'cyclone_occurence', show=True)
-    # variable_pixel_pixel('202002017', '20200328', ci.barent_extent)
+    variable_pixel_pixel('202002017', '20200221', ci.barent_extent)
     # variables_against_time('20200120', '20200210', ci.arctic_extent, 'leads', 'siconc')
+    pass
