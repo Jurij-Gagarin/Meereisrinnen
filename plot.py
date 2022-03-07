@@ -1,47 +1,49 @@
-import datetime
 import case_information as ci
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import leads
 import data_science as ds
 import numpy as np
-import calendar
-from dateutil.rrule import rrule, MONTHLY
-from scipy.interpolate import CubicSpline
 import helpful_functions as hf
-from skimage.transform import resize
-import dcor
+
+
+def show_plot(fig, file_name, show):
+    # Decides if the figure is shown or saved.
+    if show:
+        plt.show()
+    else:
+        plt.savefig(file_name, bbox_inches='tight')
+        plt.close(fig)
 
 
 class VarOptions:
     def __init__(self, var):
         self.var = var
         # Dictionaries that assign colors, cmaps, ... to certain variables
-        contour_plot = {'msl': True, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False,
-                        'siconc': False, 'wind_quiver': False, 'siconc_diff': False, 'wind_diff': False}
         cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'gray', 'wind': 'cividis', 't2m': 'coolwarm',
-                     'leads': 'cool', 'siconc': 'Blues', 'wind_quiver': 'summer', 'siconc_diff': 'bwr',
-                     'wind_diff':'bwr'}
+                     'leads': 'cool', 'siconc': 'Blues', 'wind_quiver': 'gist_rainbow', 'siconc_diff': 'bwr',
+                     'wind_diff': 'bwr', 'lead_diff': 'bwr'}
         alpha_dict = {'msl': 1, 'cyclone_occurence': .15, 'wind': 1, 't2m': 1, 'leads': 1, 'siconc': 1, 'wind_quiver': 1
-                      , 'siconc_diff': 1, 'wind_diff': 1}
+                      , 'siconc_diff': 1, 'wind_diff': 1, 'lead_diff': 1}
         color_dict = {'msl': 'red', 'leads': 'blue', 'wind': 'orange', 'cyclone_occurence': 'green', 't2m': 'purple',
-                      'siconc': 'turquoise', 'wind_quiver': None, 'siconc_diff': None, 'wind_diff': None}
+                      'siconc': 'turquoise', 'wind_quiver': None, 'siconc_diff': None, 'wind_diff': None,
+                      'lead_diff': None}
         unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K', 'siconc': '%',
-                     'wind_quiver': 'm/s', 'siconc_diff': '%', 'wind_diff': None}
+                     'wind_quiver': 'm/s', 'siconc_diff': '%', 'wind_diff': 'm/s', 'lead_diff': '%'}
         name_dict = {'cyclone_occurence': 'cyclone frequency', 'leads': 'daily new lead fraction', 'wind': 'wind speed',
                      't2m': 'two meter temperature', 'msl': 'mean sea level pressure', 'siconc': 'sea ice concentration'
-                     , 'wind_quiver': 'windspeed', 'siconc_diff': 'sea ice concentration difference'
-                     , 'wind_diff': 'wind difference'}
-        quiver_dict = {'msl': False, 'wind': False, 't2m': False, 'cyclone_occurence': False, 'leads': False,
-                       'siconc': False, 'wind_quiver': True, 'siconc_diff': False, 'wind_diff': False}
+                     , 'wind_quiver': 'windspeed', 'siconc_diff': 'sea ice concentration difference',
+                     'wind_diff': 'wind difference', 'lead_diff': 'lead fraction difference'}
+        style_dict = {'msl': 'contour', 'wind': 'mesh', 't2m': 'mesh', 'cyclone_occurence': 'mesh', 'leads': 'mesh',
+                      'siconc': 'mesh', 'wind_quiver': 'quiver', 'siconc_diff': 'mesh', 'wind_diff': 'mesh',
+                      'lead_diff': 'mesh'}
 
-        self.contour = contour_plot[self.var]
         self.cmap = cmap_dict[self.var]
         self.alpha = alpha_dict[self.var]
         self.color = color_dict[self.var]
         self.unit = unit_dict[self.var]
         self.name = name_dict[self.var]
-        self.quiver = quiver_dict[self.var]
+        self.style = style_dict[self.var]
 
     def label(self, extra_label=''):
         return f'{self.name} in {self.unit}' + extra_label
@@ -63,7 +65,7 @@ class RegionalPlot:
             if var == 'leads':
                 self.variable.remove('leads')
                 self.plot_leads = True
-            if var == 'siconc' or var == 'siconc_diff' or var == 'wind' or var == 'wind_diff':
+            if var == 'siconc' or var == 'siconc_diff' or var == 'wind' or var == 'wind_diff' or var == 'lead_diff':
                 self.variable.remove(var)
                 self.split_figure = True
 
@@ -121,7 +123,7 @@ class RegionalPlot:
             a1.set_title(ds.string_time_to_datetime(date), fontsize=20)
             a1.set_title(ds.string_time_to_datetime(date), fontsize=20)
             print(date)
-            images2 = self.regional_var_plot(fig, a2, date, ['wind_diff'], plot_leads=False)
+            images2 = self.regional_var_plot(fig, a2, date, ['lead_diff'], plot_leads=False)
             images1 = self.regional_var_plot(fig, a1, date, self.variable, plot_leads=True)
 
         if show_cbar and images1 and images2:
@@ -156,15 +158,6 @@ def setup_plot(extent):
     extent = extent if extent else ci.arctic_extent
     ax.set_extent(extent, crs=ccrs.PlateCarree())
     return fig, ax
-
-
-def show_plot(fig, file_name, show):
-    # Decides if the figure is shown or saved.
-    if show:
-        plt.show()
-    else:
-        plt.savefig(file_name, bbox_inches='tight')
-        plt.close(fig)
 
 
 def regional_var_plot(date, extent=None, show=False, variable=None, plot_leads=True, show_cbar=False):
@@ -203,39 +196,6 @@ def regional_var_plot(date, extent=None, show=False, variable=None, plot_leads=T
     show_plot(fig, file_name, show)
 
 
-def two_lead_diff_plot(date1, date2, extent=None, file_name=None, show=False, msl=True):
-    # This method is used to plot the difference between day to day Leads. It's currently not supported.
-    if not file_name:
-        file_name = f'./plots/diff{date1}-{date2}.png'
-
-    # setup data
-    lead1 = leads.Lead(date1)
-    lead2 = leads.Lead(date2)
-    grid = leads.CoordinateGrid()
-
-    # setup plot
-    fig, ax = setup_plot(extent)
-    ax.set_title(f'Sea ice leads difference {lead1.date[6:]}-{lead1.date[4:6]}-{lead1.date[:4]}/'
-                 f'{lead2.date[6:]}-{lead2.date[4:6]}-{lead2.date[:4]} in % per lattice- cell',
-                 size=17)
-
-    # plot data
-    ds.two_lead_diff(lead1, lead2)
-    im = ax.pcolormesh(grid.lon, grid.lat, 100 * lead2.lead_data, cmap='bwr', transform=ccrs.PlateCarree())
-    ax.pcolormesh(grid.lon, grid.lat, lead2.water, cmap='coolwarm', transform=ccrs.PlateCarree())
-    ax.pcolormesh(grid.lon, grid.lat, lead2.land, cmap='Set2_r', transform=ccrs.PlateCarree())
-    ax.pcolormesh(grid.lon, grid.lat, lead2.cloud, cmap='twilight', transform=ccrs.PlateCarree())
-    cbar = fig.colorbar(im, ax=ax)
-    cbar.ax.tick_params(labelsize=17)
-
-    # plot variable
-    if msl:
-        variable_plot(date2, fig, ax, 'summer')
-
-    # Show/Save the figure
-    show_plot(fig, file_name, show)
-
-
 def lead_plot(grid, lead, fig, ax, show_cbar):
     # Plots lead fraction
     im = ax.pcolormesh(grid.lon, grid.lat, lead.new_leads(), cmap='cool', transform=ccrs.PlateCarree())
@@ -248,41 +208,57 @@ def lead_plot(grid, lead, fig, ax, show_cbar):
     return im
 
 
-def variable_plot(date, fig, ax, variable, show_cbar):
-    # Plots data that is stored in a Era5 grid.
-    Var = VarOptions(variable)
-    im = None
+def ds_from_var(variable, date):
+    re = None
     if variable == 'wind_quiver':
+        from skimage.transform import resize
+        re = resize
         data_set = leads.Era5Regrid(leads.Lead(date), 'wind_quiver')  # With this Era5Regrid-class is tested
     elif variable == 'siconc_diff':
         data_set = leads.Era5('siconc')
     elif variable == 'wind_diff':
         data_set = leads.Era5('wind')
+    elif variable == 'lead_diff':
+        data_set = leads.Lead(date)
     else:
         data_set = leads.Era5(variable)
 
-    if Var.contour:
-        im = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=Var.cmap,
-                              alpha=Var.alpha, transform=ccrs.PlateCarree(), levels=10)
-        ax.clabel(im, inline=True, fontsize=15, inline_spacing=10)
-    elif Var.quiver:
+    return data_set, re
+
+
+def variable_plot(date, fig, ax, variable, show_cbar):
+    # Plots data that is stored in a Era5 grid.
+    Var = VarOptions(variable)
+    data_set, resize = ds_from_var(variable, date)
+    im = None
+
+    if Var.style == 'contour':
+        cim = ax.contour(data_set.lon, data_set.lat, data_set.get_variable(date), cmap=Var.cmap,
+                         alpha=Var.alpha, transform=ccrs.PlateCarree(), levels=10)
+        ax.clabel(cim, inline=True, fontsize=15, inline_spacing=10)
+    elif Var.style == 'quiver':
         lat_dir, lon_dir = data_set.get_quiver(date)
         dim = (50, 50)
         lon, lat = resize(data_set.lon, dim), resize(data_set.lat, dim)
         v10, u10 = resize(lon_dir, dim), resize(lat_dir, dim)
         im = ax.quiver(lon, lat, v10, u10, np.sqrt(v10**2+u10**2), transform=ccrs.PlateCarree(), cmap=Var.cmap,
-                       width=.005, pivot='mid', clim=(0.0, 25.0))  # scale=40, scale_units='inches'
-    elif variable == 'siconc_diff' or variable == 'wind_diff' or variable == 'lead_diff':
+                       width=.005, pivot='mid', clim=(0.0, 18.0))  # scale=40, scale_units='inches'
+    elif variable == 'siconc_diff' or variable == 'wind_diff':
         # prev_date = ds.string_time_to_datetime(date)
         # prev_date = ds.datetime_to_string(prev_date - datetime.timedelta(days=1))
         data_set.get_var_diff('20200214', '20200225')
         im = ax.pcolormesh(data_set.lon, data_set.lat, np.subtract(data_set.get_variable(date), data_set.var_avg),
                            alpha=Var.alpha, cmap=Var.cmap, transform=ccrs.PlateCarree(), vmin=-20.0, vmax=20.0)
+    elif variable == 'lead_diff':
+        avg = leads.lead_avg('20200201', '20200229')
+        lon, lat = leads.CoordinateGrid().lon, leads.CoordinateGrid().lat
+        im = ax.pcolormesh(lon, lat, np.subtract(leads.Lead(date).new_leads(), avg), vmin=-80.0, vmax=80.0,
+                           alpha=Var.alpha, cmap=Var.cmap, transform=ccrs.PlateCarree())
     else:
         im = ax.pcolormesh(data_set.lon, data_set.lat, data_set.get_variable(date), alpha=Var.alpha, cmap=Var.cmap,
                            transform=ccrs.PlateCarree())
-        im.set_clim(0, 25)
-    if show_cbar:
+        # im.set_clim(0, 25)
+    if show_cbar and im:
         cbar = fig.colorbar(im, ax=ax)
         cbar.ax.tick_params(labelsize=20)
     if im:
@@ -362,21 +338,23 @@ def variable_pixel_pixel(date1, date2, extent):
     plt.show()
 
 
-
 def variables_against_time(date1, date2, extent, var1, var2, spline=False, show=False):
+    from dcor import distance_correlation
     # This shows you how two variables change with respect to time.
     dates = ds.string_time_to_datetime(ds.time_delta(date1, date2))
     fig, ax = plt.subplots(figsize=(20, 10))
     ax_twin = ax.twinx()
     Var1, Var2 = VarOptions(var1), VarOptions(var2)
     title = f'Changes in {Var1.name} and {Var2.name} in the {ci.extent_dict[extent]}.'
-    y, i = [], 0
+    y, y_err, i = [], [], 0
 
     for a, v, Var in zip([ax, ax_twin], [var1, var2], [Var1, Var2]):
-        y.append(ds.variable_daily_avg(date1, date2, extent, v))
-        y[i] = y[i] / np.max(y[i])
+        var = ds.variable_daily_avg(date1, date2, extent, v)
+        y.append(var[0])
+        y_err.append(var[1])
 
         if spline:
+            from scipy.interpolate import CubicSpline
             x = list(range(len(dates)))
             a.scatter(x, y[i], c=Var.color)
             f = CubicSpline(x, y[i], bc_type='natural')
@@ -385,15 +363,17 @@ def variables_against_time(date1, date2, extent, var1, var2, spline=False, show=
             a.plot(x_new, y_new, c=Var.color, linestyle='--')
         else:
             a.plot(dates, y[i], c=Var.color, linestyle='--')
+            a.fill_between(dates, (np.array(y[i]) - np.array(y_err[i])), (np.array(y[i]) + np.array(y_err[i])),
+                           color=Var.color, alpha=.2)
 
-        a.set_ylabel(f'{Var.name} normalized', fontsize=15)
+        a.set_ylabel(f'{Var.name}', fontsize=15)
         a.yaxis.label.set_color(Var.color)
         a.tick_params(axis='y', colors=Var.color, labelsize=15)
         i += 1
 
     ax.tick_params(axis='x', labelsize=15)
     # title += f' R = {hf.round_sig(np.corrcoef(y[0], y[1])[0, 1])}'
-    title += f' R = {hf.round_sig(dcor.distance_correlation(y[0], y[1]))}'
+    title += f' R = {hf.round_sig(distance_correlation(y[0], y[1]))}'
     ax.set_title(title, fontsize=15)
 
     show_plot(fig, f'./plots/{var1}_{var2}_{ds.string_time_to_datetime(date1)}_'
@@ -415,50 +395,18 @@ def plot_lead_from_vars(date1, date2, extent, var1, var2):
     plt.show()
 
 
-def plot_lead_cyclone_sum_monthly(date1, date2, extent, variable):
-    # get all months between dates
-    start_date = datetime.date(int(date1[:4]), int(date1[4:6]), int(date1[6:]))
-    end_date = datetime.date(int(date2[:4]), int(date2[4:6]), int(date2[6:]))
-    dates = [(dt.year, dt.month) for dt in rrule(MONTHLY, dtstart=start_date, until=end_date)]
-    lead_avg, variable_avg = [], []
-
-    for date in dates:
-        month_r = calendar.monthrange(date[0], date[1])[1]
-        year_month = str(date[0]) + str(date[1]).zfill(2)
-        print(year_month)
-        avg = ds.lead_average(year_month + '01', year_month + str(month_r), extent)
-        var_avg = ds.variable_average(year_month + '01', year_month + str(month_r), extent, variable)
-        avg = avg[~np.isnan(avg)]
-        var_avg = var_avg[~np.isnan(var_avg)]
-        lead_avg.append(np.sum(avg) / len(avg))
-        variable_avg.append(np.sum(var_avg) / len(var_avg))
-
-    dates = [str(date[0]) + '-' + str(date[1]).zfill(2) for date in dates]
-    plt.title('Monthly lead fraction of the entire Arctic')
-    plt.xlabel('Month')
-    plt.ylabel('Normalized average lead fraction per month')
-    plt.scatter(dates, lead_avg, label='leads')
-    plt.scatter(dates, variable_avg, label=f'{variable}')
-    plt.show()
-
-
-def plots_for_case(case, extent=None, var=None, plot_lead=True, diff=False):
+def plots_for_case(case, extent=None, var=None, plot_lead=True):
     for i, date in enumerate(case):
         print(f'Working on plots for date:{date}')
         regional_var_plot(date, extent=extent, variable=var, plot_leads=plot_lead)
 
-        if diff:
-            try:
-                two_lead_diff_plot(case[i], case[i + 1], extent=extent)
-            except IndexError:
-                pass
-
 
 if __name__ == '__main__':
-    #regional_var_plot('20200220', show=True, variable=['siconc_diff', 'wind_quiver'], plot_leads=False,
-                      #extent=ci.extent1, show_cbar=True)
+    for date in ds.time_delta('20200213', '20200224'):
+        regional_var_plot(date, show=False, variable=['msl', 'wind_quiver'], plot_leads=True,
+                          extent=ci.extent1, show_cbar=True)
 
-    RegionalPlot('20200217', '20200322', ['leads', 'msl', 'wind_quiver', 'wind_diff'], extent=ci.extent1, show=True)
+    #RegionalPlot('20200213', '20200322', ['leads', 'msl', 'wind_quiver'], extent=ci.extent1, show=True)
 
     #matrix_plot('20200320', '20200330', 'leads', extent=ci.barent_extent, show=True)
     # plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')
@@ -469,6 +417,7 @@ if __name__ == '__main__':
         variables_against_time(d[0], d[1], ci.arctic_extent, 'leads', 'siconc')
     pass
     '''
-    # variables_against_time('20200214', '20200224', ci.barent_extent, 'leads', 'cyclone_occurence', show=False)
+    pass
+    #,variables_against_time('20200214', '20200224', ci.barent_extent, 'leads', 'cyclone_occurence', show=True)
     # variable_pixel_pixel('202002017', '20200328', ci.barent_extent)
     # variables_against_time('20200120', '20200210', ci.arctic_extent, 'leads', 'siconc')

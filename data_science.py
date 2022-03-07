@@ -7,6 +7,19 @@ import scipy.ndimage
 import scipy.optimize as opt
 
 
+def append_dates(dates, shape, to_end=False):
+    prod = shape[0] * shape[1]
+    rest = prod - len(dates) % prod
+    for i in range(rest):
+        if i % 2 == 0 or to_end:
+            d = string_time_to_datetime(dates[-1])
+            dates.append(datetime_to_string(d + timedelta(days=1)))
+        else:
+            d = string_time_to_datetime(dates[0])
+            dates.insert(0, datetime_to_string(d - timedelta(days=1)))
+    return dates
+
+
 def datetime_to_string(dates):
     if not isinstance(dates, list):
         return ''.join(c for c in str(dates) if c not in '-')
@@ -170,7 +183,7 @@ def lead_monthly_average(year, month, extent):
 def variable_daily_avg(date1, date2, extent, variable):
     # This returns an array that contains the daily average values of your variable data.
     dates = time_delta(date1, date2)
-    var_sum = np.zeros(len(dates))
+    var_sum, var_ste = np.zeros(len(dates)), np.zeros(len(dates))
     for i, date in enumerate(dates):
         print(date)
         if variable == 'leads':
@@ -178,7 +191,8 @@ def variable_daily_avg(date1, date2, extent, variable):
         else:
             var = variable_average(date, date, extent, variable)
         var_sum[i] = np.nanmean(var)
-    return var_sum
+        var_ste[i] = np.nanstd(var) / np.sqrt(np.size(var[~np.isnan(var)]))
+    return var_sum, 2*var_ste
 
 
 def lead_from_vars(date1, date2, extent, var1, var2):
@@ -207,5 +221,8 @@ if __name__ == '__main__':
 
     #lead_average('20200101', '20200228')
 
-    print(lead_monthly_average(2020, 2, extent1))
+    #print(lead_monthly_average(2020, 2, extent1))
+
+    arr = np.array([[1, 2, 3, 4, 5, np.nan]])
+    print(np.size(arr[~np.isnan(arr)]))
 

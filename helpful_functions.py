@@ -1,6 +1,8 @@
 # In this module a few simple functions are stored that can be very useful
 from math import log10, floor
 import numpy as np
+from matplotlib.path import Path
+from matplotlib.patches import PathPatch
 
 
 def round_sig(x, sig=2):

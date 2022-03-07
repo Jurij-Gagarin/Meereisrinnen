@@ -7,7 +7,7 @@ import numpy as np
 
 
 class Lead:
-    def __init__(self, date, area='global'):
+    def __init__(self, date):
         # import lead fraction data
         self.date = date
         path = f'./data/{self.date}.nc'
@@ -182,6 +182,20 @@ class Era5Regrid:
         return .25 * mean_v10, .25 * mean_u10
 
 
+def lead_avg(date1, date2):
+    dates = ds.time_delta(date1, date2)
+    leads_list = np.array([Lead(date).new_leads() for date in dates])
+
+    return np.nanmean(leads_list, axis=0)
+
+
+def lead_avg_diff(date, avg):
+    lead = Lead(date)
+
+    return np.subtract(avg, lead.lead_data)
+
+
+
 if __name__ == '__main__':
     #Era5('msl')
     #Era5('siconc')
@@ -189,6 +203,15 @@ if __name__ == '__main__':
     #Era5('wind_quiver').get_quiver('20200101')
     #Era5('cyclone_occurence')
 
+    avg = lead_avg('20200213', '20200224')
+    print(avg.shape)
+    plt.imshow(avg)
+    plt.show()
+
+    diff = lead_avg_diff('20200220', avg)
+    im = plt.imshow(diff)
+    plt.colorbar(im)
+    plt.show()
 
     pass
 
