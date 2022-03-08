@@ -361,8 +361,8 @@ def variable_pixel_pixel_density(date1, date2, extent):
             cyc_mask = cyc == cyc_freq
             cyc = cyc[cyc_mask]
             sic = leads.Era5Regrid(lead, 'siconc').get_variable(date)[mask][cyc_mask]
-            lead = lead.lead_data()[mask][cyc_mask]
-            lead, cyc, sic = hf.filter_by_sic(lead, cyc, sic, 90)
+            lead = lead.lead_data[mask][cyc_mask]
+            #lead, cyc, sic = hf.filter_by_sic(lead, cyc, sic, 90)
 
             x = np.hstack((x, sic))
             y = np.hstack((y, lead))
@@ -377,11 +377,11 @@ def variable_pixel_pixel_density(date1, date2, extent):
         # Sort the points by density, so that the densest points are plotted last
         idx = z.argsort()
         x, y, z = x[idx], y[idx], z[idx]
-        im = ax.scatter(x, y, c=z, s=25)
+        im = ax.scatter(x, y, c=z, s=10, vmax=.4, cmap='rainbow')
         ax.set_xlabel('SIC in %')
-        ax.set_ylabel('new leads in %')
+        ax.set_ylabel('lead fraction in %')
         ax.set_title(f'cyclone frequency = {cyc_freq}')
-        fig.colorbar(im, ax=ax)
+    fig.colorbar(im, ax=axs.flatten())
 
     plt.show()
 
@@ -468,6 +468,6 @@ if __name__ == '__main__':
     pass
     '''
     #,variables_against_time('20200214', '20200224', ci.barent_extent, 'leads', 'cyclone_occurence', show=True)
-    variable_pixel_pixel_density('202002017', '20200221', ci.barent_extent)
+    variable_pixel_pixel_density('202002013', '20200225', ci.barent_extent)
     # variables_against_time('20200120', '20200210', ci.arctic_extent, 'leads', 'siconc')
     pass
