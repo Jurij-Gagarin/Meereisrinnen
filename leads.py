@@ -10,7 +10,7 @@ class Lead:
     def __init__(self, date):
         # import lead fraction data
         self.date = date
-        path = f'./data/{self.date}.nc'
+        path = f'./data/leads/{self.date}.nc'
         ds_lead = nc.Dataset(path)
         self.lead_frac = ds_lead['Lead Fraction'][:]
         self.old_shape = self.lead_frac.shape
@@ -53,7 +53,7 @@ class CoordinateGrid:
     def __init__(self):
         lead = Lead('20200101')
         # import corresponding coordinates
-        path_grid = './data/LatLonGrid.nc'
+        path_grid = './data/leads/LatLonGrid.nc'
         ds_latlon = nc.Dataset(path_grid)
         self.lat = ds_latlon['Lat Grid'][:]
         self.lon = ds_latlon['Lon Grid'][:]

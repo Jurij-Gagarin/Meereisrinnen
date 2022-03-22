@@ -21,3 +21,326 @@
 /data/ERA5_Wind.nc
 /data/ERA5_Wind_2019_NovDec.nc
 /data/ERA5_Wind_2020_JanApr_regrid.nc
+/data/ERA5_META.nc
+/data/ERA5_META_remapbil.nc
+/data/ERA5_METAs_remapbil.nc
+/data/ERA5_METAw_remapbil.nc
+/data/ERA5_METAw.nc
+/data/ERA5_METAs.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002041200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002081200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002091200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002101200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002111200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002141200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002161200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002181200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002191200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002201200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002211200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002221200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002261200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002271200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002281200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002291200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202003011200Z.nc
+/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-SH_LRSIDRIFT-202002021200Z.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202001310549_202002010528.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202001311043_202002011022.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202001311737_202002011716.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002010019_202002012358.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002010528_202002020507.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002011204_202002021143.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002011716_202002021655.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002012358_202002022337.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002020507_202002030446.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002021143_202002031122.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002021655_202002031634.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002022337_202002032316.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002030446_202002040422.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002031122_202002041101.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002031816_202002041755.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002032316_202002042255.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002040604_202002050543.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002041101_202002051040.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002041755_202002051734.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002042255_202002052234.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002050543_202002060522.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002051040_202002061019.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002051734_202002061713.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002060016_202002062355.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002060522_202002070501.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002061158_202002071137.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002061713_202002071652.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002062355_202002072334.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002070501_202002080440.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002071137_202002081116.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002071652_202002081631.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002072334_202002082313.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002080622_202002090601.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002081116_202002091055.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002081813_202002091752.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002082313_202002092252.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002090601_202002100540.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002091055_202002101034.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002091752_202002101731.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002092252_202002102231.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002100540_202002110519.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002101216_202002111216.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002101731_202002111710.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002110013_202002112352.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002110519_202002120458.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002111216_202002121134.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002111710_202002121649.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002112352_202002122331.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002120458_202002130437.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002121134_202002131113.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002121649_202002131628.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002122331_202002132310.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002130619_202002140558.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002131113_202002141052.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002131810_202002141749.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002132310_202002142249.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002140558_202002150537.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002141052_202002151031.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002141749_202002151728.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002142249_202002152228.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002150537_202002160516.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002151213_202002161152.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002151728_202002161707.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002160010_202002162349.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002160516_202002170455.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002161152_202002171131.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002161707_202002171646.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002162349_202002172328.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002170455_202002180434.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002171131_202002181110.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002171825_202002181807.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002172328_202002182307.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002180616_202002190555.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002181110_202002191049.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002181807_202002191746.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002182307_202002192246.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002190555_202002200534.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002191049_202002201028.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002191746_202002201725.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002192246_202002202222.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002200534_202002210513.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002201210_202002211149.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002201725_202002211704.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002210007_202002212346.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002210513_202002220452.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002211149_202002221128.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002211704_202002221643.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002212346_202002222325.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002220452_202002230431.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002221128_202002231107.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002221822_202002231801.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002222325_202002232301.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002230613_202002240552.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002231107_202002241046.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002231801_202002241740.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002232301_202002242240.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002240552_202002250531.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002241046_202002251025.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002241740_202002251719.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002242240_202002252219.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002250531_202002260510.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002251207_202002261146.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002251719_202002261658.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002260001_202002262340.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002260510_202002270449.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002261146_202002271125.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002261658_202002271637.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002262340_202002272319.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002270449_202002280428.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002271125_202002281104.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002271819_202002281758.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002272319_202002282258.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002280610_202002290549.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002281104_202002291107.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002281758_202002291737.nc
+/data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202002282258_202002292237.nc
+/data/leads/20191101.nc
+/data/leads/20191102.nc
+/data/leads/20191103.nc
+/data/leads/20191104.nc
+/data/leads/20191105.nc
+/data/leads/20191106.nc
+/data/leads/20191107.nc
+/data/leads/20191108.nc
+/data/leads/20191109.nc
+/data/leads/20191110.nc
+/data/leads/20191111.nc
+/data/leads/20191112.nc
+/data/leads/20191113.nc
+/data/leads/20191114.nc
+/data/leads/20191115.nc
+/data/leads/20191116.nc
+/data/leads/20191117.nc
+/data/leads/20191118.nc
+/data/leads/20191119.nc
+/data/leads/20191120.nc
+/data/leads/20191121.nc
+/data/leads/20191122.nc
+/data/leads/20191123.nc
+/data/leads/20191124.nc
+/data/leads/20191125.nc
+/data/leads/20191126.nc
+/data/leads/20191127.nc
+/data/leads/20191128.nc
+/data/leads/20191129.nc
+/data/leads/20191130.nc
+/data/leads/20191201.nc
+/data/leads/20191202.nc
+/data/leads/20191203.nc
+/data/leads/20191204.nc
+/data/leads/20191205.nc
+/data/leads/20191206.nc
+/data/leads/20191207.nc
+/data/leads/20191208.nc
+/data/leads/20191209.nc
+/data/leads/20191210.nc
+/data/leads/20191211.nc
+/data/leads/20191212.nc
+/data/leads/20191213.nc
+/data/leads/20191214.nc
+/data/leads/20191215.nc
+/data/leads/20191216.nc
+/data/leads/20191217.nc
+/data/leads/20191218.nc
+/data/leads/20191219.nc
+/data/leads/20191220.nc
+/data/leads/20191221.nc
+/data/leads/20191222.nc
+/data/leads/20191223.nc
+/data/leads/20191224.nc
+/data/leads/20191225.nc
+/data/leads/20191226.nc
+/data/leads/20191227.nc
+/data/leads/20191228.nc
+/data/leads/20191229.nc
+/data/leads/20191230.nc
+/data/leads/20191231.nc
+/data/leads/20200101.nc
+/data/leads/20200102.nc
+/data/leads/20200103.nc
+/data/leads/20200104.nc
+/data/leads/20200105.nc
+/data/leads/20200106.nc
+/data/leads/20200107.nc
+/data/leads/20200108.nc
+/data/leads/20200109.nc
+/data/leads/20200110.nc
+/data/leads/20200111.nc
+/data/leads/20200112.nc
+/data/leads/20200113.nc
+/data/leads/20200114.nc
+/data/leads/20200115.nc
+/data/leads/20200116.nc
+/data/leads/20200117.nc
+/data/leads/20200118.nc
+/data/leads/20200119.nc
+/data/leads/20200120.nc
+/data/leads/20200121.nc
+/data/leads/20200122.nc
+/data/leads/20200123.nc
+/data/leads/20200124.nc
+/data/leads/20200125.nc
+/data/leads/20200126.nc
+/data/leads/20200127.nc
+/data/leads/20200128.nc
+/data/leads/20200129.nc
+/data/leads/20200130.nc
+/data/leads/20200131.nc
+/data/leads/20200201.nc
+/data/leads/20200202.nc
+/data/leads/20200203.nc
+/data/leads/20200204.nc
+/data/leads/20200205.nc
+/data/leads/20200206.nc
+/data/leads/20200207.nc
+/data/leads/20200208.nc
+/data/leads/20200209.nc
+/data/leads/20200210.nc
+/data/leads/20200211.nc
+/data/leads/20200212.nc
+/data/leads/20200213.nc
+/data/leads/20200214.nc
+/data/leads/20200215.nc
+/data/leads/20200216.nc
+/data/leads/20200217.nc
+/data/leads/20200218.nc
+/data/leads/20200219.nc
+/data/leads/20200220.nc
+/data/leads/20200221.nc
+/data/leads/20200222.nc
+/data/leads/20200223.nc
+/data/leads/20200224.nc
+/data/leads/20200225.nc
+/data/leads/20200226.nc
+/data/leads/20200227.nc
+/data/leads/20200228.nc
+/data/leads/20200229.nc
+/data/leads/20200301.nc
+/data/leads/20200302.nc
+/data/leads/20200303.nc
+/data/leads/20200304.nc
+/data/leads/20200305.nc
+/data/leads/20200306.nc
+/data/leads/20200307.nc
+/data/leads/20200308.nc
+/data/leads/20200309.nc
+/data/leads/20200310.nc
+/data/leads/20200311.nc
+/data/leads/20200312.nc
+/data/leads/20200313.nc
+/data/leads/20200314.nc
+/data/leads/20200315.nc
+/data/leads/20200316.nc
+/data/leads/20200317.nc
+/data/leads/20200318.nc
+/data/leads/20200319.nc
+/data/leads/20200320.nc
+/data/leads/20200321.nc
+/data/leads/20200322.nc
+/data/leads/20200323.nc
+/data/leads/20200324.nc
+/data/leads/20200325.nc
+/data/leads/20200326.nc
+/data/leads/20200327.nc
+/data/leads/20200328.nc
+/data/leads/20200329.nc
+/data/leads/20200330.nc
+/data/leads/20200331.nc
+/data/leads/20200401.nc
+/data/leads/20200402.nc
+/data/leads/20200403.nc
+/data/leads/20200404.nc
+/data/leads/20200405.nc
+/data/leads/20200406.nc
+/data/leads/20200407.nc
+/data/leads/20200408.nc
+/data/leads/20200409.nc
+/data/leads/20200410.nc
+/data/leads/20200411.nc
+/data/leads/20200412.nc
+/data/leads/20200413.nc
+/data/leads/20200414.nc
+/data/leads/20200415.nc
+/data/leads/20200416.nc
+/data/leads/20200417.nc
+/data/leads/20200418.nc
+/data/leads/20200419.nc
+/data/leads/20200420.nc
+/data/leads/20200421.nc
+/data/leads/20200422.nc
+/data/leads/20200423.nc
+/data/leads/20200424.nc
+/data/leads/20200425.nc
+/data/leads/20200426.nc
+/data/leads/20200427.nc
+/data/leads/20200428.nc
+/data/leads/20200429.nc
+/data/leads/20200430.nc
+/data/leads/LatLonGrid.nc
