@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import plot as pl
 from datetime import date, datetime
+import case_information as ci
 
 
 def dt_from_path(path):
@@ -40,7 +41,7 @@ class IceDivergence:
             dY[dY == -998.] = 0
             dX = ds['dX'][:]
             dX[dX == -998.] = 0
-            im = ax.pcolormesh(ds['lon'][:], ds['lat'][:], dY, transform=ccrs.PlateCarree(), cmap='bwr')
+            im = ax.pcolormesh(ds['lon'][:], ds['lat'][:], ds['data_status'], transform=ccrs.PlateCarree(), cmap='Accent')
             cbar = fig.colorbar(im)
             #cbar.set_ticks([0, 1, 2, 4, 5])
             #cbar.set_ticklabels(['valid', 'correlation less than min', 'drift speed larger than max', 'invalid',
@@ -72,15 +73,25 @@ class IceDivergence:
             del_dY = del_matrix_neighbour(dY)
 
             length = (dX**2 + dY**2)**.5
-            div = (del_dX**2 + del_dY**2)**.5 / length
+            div = (del_dX**2 + del_dY**2)**.5 / (length * dt)
 
             # plot divergence
-            print(div[0][10:20])
-            print(dY[0][10:20])
-            fig, ax = pl.setup_plot(None)
-            im = ax.pcolormesh(ds['lon'][:], ds['lat'][:], div, transform=ccrs.PlateCarree())
-            fig.colorbar(im)
-            ax.set_title(f'start:{ds.start_date} stop:{ds.stop_date}', fontsize=20)
+            #fig, ax = pl.setup_plot(None)
+            fig, (ax1, ax2) = plt.subplots(1, 2, subplot_kw={"projection": ccrs.NorthPolarStereo(-45)},
+                                           constrained_layout=True)
+            fig.set_size_inches(32, 18)
+            im = ax1.pcolormesh(ds['lon'][:], ds['lat'][:], div, transform=ccrs.PlateCarree(), vmax=.03)
+            ax1.coastlines(resolution='110m')
+            ax1.set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+            fig.colorbar(im, ax=ax1)
+            ax1.set_title(f'start:{ds.start_date} stop:{ds.stop_date}', fontsize=20)
+
+            im2 = ax2.pcolormesh(ds['lon'][:], ds['lat'][:], ds['data_status'][:], transform=ccrs.PlateCarree(),
+                                cmap='Accent')
+            fig.colorbar(im2, ax=ax2)
+            ax2.coastlines(resolution='110m')
+            ax2.set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+            ax2.set_title('data status, green means good')
             plt.savefig(f'divergence-{ds.start_date}_to_{ds.stop_date}.png', bbox_inches='tight')
             plt.close(fig)
             print(ds.start_date, ds.stop_date)
@@ -88,6 +99,6 @@ class IceDivergence:
 
 
 if __name__ == '__main__':
-    IceDivergence().ice_drift_correlation()
+    IceDivergence().ice_div()
 
 
