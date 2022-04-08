@@ -72,7 +72,7 @@ class IceDivergence:
             # x, y = np.tile(x, (np.size(y), 1)), np.transpose(np.tile(y, (np.size(x), 1)))
 
             # calculate drift speed in the x and y direction in m/s
-            u, v = dX / (1000*dt), dY / (100*dt)
+            u, v = 1000 * dX / dt, 1000 * dY / dt
 
             # calculate divergence values
             du, dv = del_matrix_neighbour(u), del_matrix_neighbour(v)
@@ -85,7 +85,7 @@ class IceDivergence:
             fig, (ax1, ax2) = plt.subplots(1, 2, subplot_kw={"projection": ccrs.NorthPolarStereo(-45)},
                                            constrained_layout=True)
             fig.set_size_inches(32, 18)
-            cap = 1.e-11
+            cap = 2.e-06
             im = ax1.pcolormesh(ds['lon'][:], ds['lat'][:], div, transform=ccrs.PlateCarree(), vmax=cap, vmin=-cap)
             ax1.coastlines(resolution='50m')
             ax1.set_extent(ci.barent_extent, crs=ccrs.PlateCarree())
