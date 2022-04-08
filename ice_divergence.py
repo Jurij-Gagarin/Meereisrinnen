@@ -3,15 +3,18 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
+
+import plot
 import plot as pl
-from datetime import date, datetime
+import datetime
 import case_information as ci
+import data_science as dscience
 
 
 def dt_from_path(path):
     date1, date2 = path[36:48], path[49:-3]
-    datetime1 = datetime(int(date1[:4]), int(date1[4:6]), int(date1[6:8]), int(date1[8:10]), int(date1[10:12]))
-    datetime2 = datetime(int(date2[:4]), int(date2[4:6]), int(date2[6:8]), int(date2[8:10]), int(date2[10:12]))
+    datetime1 = datetime.datetime(int(date1[:4]), int(date1[4:6]), int(date1[6:8]), int(date1[8:10]), int(date1[10:12]))
+    datetime2 = datetime.datetime(int(date2[:4]), int(date2[4:6]), int(date2[6:8]), int(date2[8:10]), int(date2[10:12]))
 
     td = datetime2 - datetime1
     return td.total_seconds()
@@ -23,6 +26,17 @@ def del_matrix_neighbour(matrix):
     matrix_p1 = np.delete(matrix, -1)
     matrix_p1 = np.insert(matrix_p1, 0, np.nan)
     return np.reshape(matrix - matrix_p1, shape)
+
+
+def lonlat_mask(extent, lon, lat):
+    extent = list(extent)
+    lon_mask1 = lon >= min(extent[:2])
+    lon_mask2 = lon <= max(extent[:2])
+    lat_mask1 = lat >= min(extent[2:])
+    lat_mask2 = lat <= max(extent[2:])
+    print(lon_mask1 & lon_mask2 & lat_mask1 & lat_mask2)
+
+    return lon_mask1 & lon_mask2 & lat_mask1 & lat_mask2
 
 
 class IceDivergence:
@@ -108,5 +122,65 @@ class IceDivergence:
             print(ds.start_date, ds.stop_date)
 
 
+class Eumetsat:
+    def __init__(self, extent=ci.barent_extent):
+        self.dir = './data/ice drift/Eumetsat'
+        path = 'ice_drift_nh_polstere-625_multi-oi_202002171200-202002191200.nc'
+        self.path_list = os.listdir(self.dir)
+        self.data_sets = {}
+        self.extent = extent
+
+        for path in self.path_list:
+            ds = nc.Dataset(self.dir + '/' + path)
+            date = (datetime.datetime(1978, 1, 1, 0, 0, 0) + datetime.timedelta(seconds=int(ds['time'][0]))).date()
+            self.data_sets[date] = ds
+
+        dummy = list(self.data_sets.values())[0]
+        self.lon, self.lat = dummy['lon'][:], dummy['lat'][:]
+        self.lonlat_mask = ~lonlat_mask(self.extent, self.lon, self.lat)
+
+    def ice_div(self, date):
+        # choose the right data set corresponding to date
+        ds = self.data_sets[dscience.string_time_to_datetime(date)]
+
+        # Get Variables for ice displacement in km
+        # set masked values to NaN
+        dY = ds['dY'][0, :]
+        dY[dY.mask] = np.nan
+        dY[self.lonlat_mask] = np.nan
+        dX = ds['dX'][0, :]
+        dX[dX.mask] = np.nan
+        dX[self.lonlat_mask] = np.nan
+
+        # observation time (48h) in seconds
+        dt = 172800
+
+        # calculate drift speed in the x and y direction in km/s
+        u, v = dX / dt, dY / dt
+
+        # calculate divergence values in 1/s
+        # distance between two cells is always 62.5 km (both x,y direction)
+        du, dv = del_matrix_neighbour(u), del_matrix_neighbour(v)
+        return (du + dv)/62.5
+
+    def plot_div(self, dates):
+        divs = []
+        cap = 0
+        for date in dates:
+            div = self.ice_div(date)
+            cap = max([cap, abs(div.min()), abs(div.max())])
+            divs.append(div)
+
+        for date, div in zip(dates, divs):
+            fig, ax = plot.setup_plot(self.extent)
+            im = ax.pcolormesh(self.lon, self.lat, div, transform=ccrs.PlateCarree(), vmax=cap, vmin=-cap, cmap='bwr')
+            ax.set_title(f'Ice divergence in 1/s \n {dscience.string_time_to_datetime(date)}', fontsize=25)
+            cbar = fig.colorbar(im)
+            cbar.ax.tick_params(axis='both', labelsize=25)
+            plot.show_plot(fig, f'./plots/ice divergence/divergence-{dscience.string_time_to_datetime(date)}.png',
+                           False)
+
+
 if __name__ == '__main__':
-    IceDivergence().ice_div()
+    Eumetsat().plot_div(dscience.time_delta('20200210', '20200229'))
+

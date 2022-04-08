@@ -27,24 +27,6 @@
 /data/ERA5_METAw_remapbil.nc
 /data/ERA5_METAw.nc
 /data/ERA5_METAs.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002041200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002081200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002091200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002101200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002111200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002141200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002161200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002181200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002191200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002201200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002211200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002221200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002261200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002271200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002281200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202002291200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-NH_LRSIDRIFT-202003011200Z.nc
-/data/ice drift/Eumetsat/S-OSI_-NOR_-MULT-SH_LRSIDRIFT-202002021200Z.nc
 /data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202001310549_202002010528.nc
 /data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202001311043_202002011022.nc
 /data/ice drift/CMEMS/ice_drift_nh_polstere-200_avhrr-ch4_202001311737_202002011716.nc
@@ -344,3 +326,61 @@
 /data/leads/20200429.nc
 /data/leads/20200430.nc
 /data/leads/LatLonGrid.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202001301200-202002011200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202001311200-202002021200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002011200-202002031200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002021200-202002041200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002031200-202002051200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002041200-202002061200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002051200-202002071200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002061200-202002081200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002071200-202002091200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002081200-202002101200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002091200-202002111200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002101200-202002121200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002111200-202002131200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002121200-202002141200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002131200-202002151200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002141200-202002161200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002151200-202002171200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002161200-202002181200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002171200-202002191200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002181200-202002201200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002191200-202002211200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002201200-202002221200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002211200-202002231200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002221200-202002241200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002231200-202002251200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002241200-202002261200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002251200-202002271200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002261200-202002281200.nc
+/data/ice drift/Eumetsat/ice_drift_nh_polstere-625_multi-oi_202002271200-202002291200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202001301200-202002011200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202001311200-202002021200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002011200-202002031200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002021200-202002041200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002031200-202002051200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002041200-202002061200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002051200-202002071200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002061200-202002081200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002071200-202002091200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002081200-202002101200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002091200-202002111200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002101200-202002121200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002111200-202002131200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002121200-202002141200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002131200-202002151200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002141200-202002161200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002151200-202002171200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002161200-202002181200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002171200-202002191200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002181200-202002201200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002191200-202002211200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002201200-202002221200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002211200-202002231200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002221200-202002241200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002231200-202002251200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002241200-202002261200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002251200-202002271200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002261200-202002281200.nc
+/data/ice drift/sh/ice_drift_sh_polstere-625_multi-oi_202002271200-202002291200.nc
