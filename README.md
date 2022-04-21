@@ -1,5 +1,5 @@
 # Meereisrinnen
-To run the scripts porperly you need to download the data first. It can be found under:
+To run the scripts porperly you need to download the data first. File path:
 
 smb://smb.isipd.dmawi.de/projects/atm_regmod/projekte/cyclones/leads/data
 
