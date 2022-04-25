@@ -27,6 +27,11 @@ def del_matrix_neighbour(matrix):
     return np.reshape(matrix - matrix_p1, shape)
 
 
+def matrix_neighbour_diff(matrix):
+    gradv, gradh = np.gradient(matrix)
+    return .5 * (gradv + gradh)
+
+
 def lonlat_mask(extent, lon, lat):
     extent = list(extent)
     lon_mask1 = lon >= min(extent[:2])
@@ -162,7 +167,8 @@ class Eumetsat:
 
         # calculate divergence values in 1/s
         # distance between two cells is always 62.5 km (both x,y direction)
-        du, dv = del_matrix_neighbour(u), del_matrix_neighbour(v)
+        #du, dv = del_matrix_neighbour(u), del_matrix_neighbour(v)
+        du, dv = matrix_neighbour_diff(u), matrix_neighbour_diff(v)
         return (du + dv)/62.5
 
     def plot_div(self, dates):
@@ -191,7 +197,7 @@ class Eumetsat:
         for date in dates:
             quiv = self.get_disp(date)
             quivs.append(quiv)
-            lengths.append((quiv[0]**2 + quiv[1]**2)*.5)
+            lengths.append((quiv[0]**2 + quiv[1]**2)**.5)
             cap = max([cap, lengths[-1].max()])
 
         for date, quiv, length in zip(dates, quivs, lengths):
@@ -209,3 +215,9 @@ class Eumetsat:
 
 if __name__ == '__main__':
     Eumetsat().plot_quiver(dscience.time_delta('20200210', '20200229'))
+    numpy_array = np.array([[np.nan,2,3,4,5,6],[1, 2, 4, 7, 11, 16], [3, 2, 4, 2, 6, 7]], dtype=float)
+    grad = np.gradient(numpy_array)
+    print(numpy_array)
+    print(grad[0])
+    print(grad[1])
+    # print(np.gradient(numpy_array))
