@@ -450,24 +450,4 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True):
 
 
 if __name__ == '__main__':
-    '''
-    for date in ds.time_delta('20200213', '20200224'):
-        regional_var_plot(date, show=False, variable=['msl', 'wind_quiver'], plot_leads=True,
-                          extent=ci.extent1, show_cbar=True)
-    '''
-
-    #RegionalPlot('20200213', '20200322', ['leads', 'msl', 'wind_quiver'], extent=ci.extent1, show=True)
-
-    #matrix_plot('20200320', '20200330', 'leads', extent=ci.barent_extent, show=True)
-    # plot_lead_cyclone_sum_monthly('20191101', '20200430', no_extent, 'cyclone_occurence')
-    # plot_lead_from_vars('20200101', '20200131', ci.arctic_extent, 'cyclone_occurence', 'siconc')
-
-    '''
-    for d in ci.Mon:
-        variables_against_time(d[0], d[1], ci.arctic_extent, 'leads', 'siconc')
-    pass
-    '''
-    #,variables_against_time('20200214', '20200224', ci.barent_extent, 'leads', 'cyclone_occurence', show=True)
-    variable_pixel_pixel_density('202002013', '20200225', ci.barent_extent)
-    # variables_against_time('20200120', '20200210', ci.arctic_extent, 'leads', 'siconc')
     pass

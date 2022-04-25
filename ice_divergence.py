@@ -33,7 +33,6 @@ def lonlat_mask(extent, lon, lat):
     lon_mask2 = lon <= max(extent[:2])
     lat_mask1 = lat >= min(extent[2:])
     lat_mask2 = lat <= max(extent[2:])
-    print(lon_mask1 & lon_mask2 & lat_mask1 & lat_mask2)
 
     return lon_mask1 & lon_mask2 & lat_mask1 & lat_mask2
 
@@ -81,7 +80,6 @@ class IceDivergence:
             dY[dY == -998.] = 0
             dX = ds['dX'][:]
             dX[dX == -998.] = 0
-            # edit this comment
             # x, y = ds['xc'][:], ds['yc'][:]
             # x, y = np.tile(x, (np.size(y), 1)), np.transpose(np.tile(y, (np.size(x), 1)))
 
@@ -125,7 +123,6 @@ class IceDivergence:
 class Eumetsat:
     def __init__(self, extent=ci.barent_extent):
         self.dir = './data/ice drift/Eumetsat'
-        path = 'ice_drift_nh_polstere-625_multi-oi_202002171200-202002191200.nc'
         self.path_list = os.listdir(self.dir)
         self.data_sets = {}
         self.extent = extent
@@ -139,7 +136,7 @@ class Eumetsat:
         self.lon, self.lat = dummy['lon'][:], dummy['lat'][:]
         self.lonlat_mask = ~lonlat_mask(self.extent, self.lon, self.lat)
 
-    def ice_div(self, date):
+    def get_disp(self, date):
         # choose the right data set corresponding to date
         ds = self.data_sets[dscience.string_time_to_datetime(date)]
 
@@ -151,6 +148,11 @@ class Eumetsat:
         dX = ds['dX'][0, :]
         dX[dX.mask] = np.nan
         dX[self.lonlat_mask] = np.nan
+        return dX, dY
+
+    def ice_div(self, date):
+        # choose the right data set corresponding to date
+        dX, dY = self.get_disp(date)
 
         # observation time (48h) in seconds
         dt = 172800
@@ -172,6 +174,7 @@ class Eumetsat:
             divs.append(div)
 
         for date, div in zip(dates, divs):
+            print(date)
             fig, ax = plot.setup_plot(self.extent)
             im = ax.pcolormesh(self.lon, self.lat, div, transform=ccrs.PlateCarree(), vmax=cap, vmin=-cap, cmap='bwr')
             ax.set_title(f'Ice divergence in 1/s \n {dscience.string_time_to_datetime(date)}', fontsize=25)
@@ -180,6 +183,29 @@ class Eumetsat:
             plot.show_plot(fig, f'./plots/ice divergence/divergence-{dscience.string_time_to_datetime(date)}.png',
                            False)
 
+    def plot_quiver(self, dates):
+        quivs = []
+        lengths = []
+        cap = 0
+        factor = 1000 / 172800
+        for date in dates:
+            quiv = self.get_disp(date)
+            quivs.append(quiv)
+            lengths.append((quiv[0]**2 + quiv[1]**2)*.5)
+            cap = max([cap, lengths[-1].max()])
+
+        for date, quiv, length in zip(dates, quivs, lengths):
+            print(date)
+            fig, ax = plot.setup_plot(self.extent)
+            im = ax.quiver(self.lon, self.lat, quiv[0] * factor, quiv[1] * factor, length * factor, scale=10, clim=(None, cap * factor),
+                           transform=ccrs.PlateCarree(), cmap='coolwarm')
+            print(im.scale)
+            ax.set_title(f'Ice drift in m/s \n {dscience.string_time_to_datetime(date)}', fontsize=25)
+            cbar = fig.colorbar(im)
+            cbar.ax.tick_params(axis='both', labelsize=25)
+            plot.show_plot(fig, f'./plots/ice divergence/displacement-{dscience.string_time_to_datetime(date)}.png',
+                           False)
+
 
 if __name__ == '__main__':
-    Eumetsat().plot_div(dscience.time_delta('20200210', '20200229'))
+    Eumetsat().plot_quiver(dscience.time_delta('20200210', '20200229'))
