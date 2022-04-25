@@ -3,7 +3,6 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
-
 import plot
 import plot as pl
 import datetime
@@ -82,6 +81,7 @@ class IceDivergence:
             dY[dY == -998.] = 0
             dX = ds['dX'][:]
             dX[dX == -998.] = 0
+            # edit this comment
             # x, y = ds['xc'][:], ds['yc'][:]
             # x, y = np.tile(x, (np.size(y), 1)), np.transpose(np.tile(y, (np.size(x), 1)))
 
@@ -183,4 +183,3 @@ class Eumetsat:
 
 if __name__ == '__main__':
     Eumetsat().plot_div(dscience.time_delta('20200210', '20200229'))
-
