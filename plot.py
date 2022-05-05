@@ -142,8 +142,7 @@ class RegionalPlot:
 
 def setup_plot(extent):
     # create figure and base map
-    fig, ax = plt.subplots()
-    fig.set_size_inches(32, 18)
+    fig, ax = plt.subplots(figsize=(10,10))
     ax = plt.axes(projection=ccrs.NorthPolarStereo(-45))
     ax.gridlines()
     ax.set_global()

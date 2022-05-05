@@ -200,10 +200,9 @@ if __name__ == '__main__':
     #Era5('msl')
     #Era5('siconc')
     #Era5('t2m')
-    #Era5('wind_quiver').get_quiver('20200101')
+    Era5('wind_quiver')
     #Era5('cyclone_occurence')
 
-    Lead('20200217')
 
     pass
 
