@@ -423,6 +423,6 @@ class Eumetsat:
 if __name__ == '__main__':
     Eumetsat(ci.arctic_extent).plot_drift_leads(dscience.time_delta('20200210', '20200229'), True)
     #Eumetsat(ci.arctic_extent).plot_drift_leads(dscience.time_delta('20200210', '20200229'), False)
-
+    # test new username
     #Eumetsat(ci.arctic_extent).plot_div_leads(dscience.time_delta('20200210', '20200229'), True)
     #Eumetsat(ci.arctic_extent).plot_div_leads(dscience.time_delta('20200210', '20200229'), False)
