@@ -22,7 +22,7 @@ class VarOptions:
         self.var = var
         # Dictionaries that assign colors, cmaps, ... to certain variables
         cmap_dict = {'msl': 'Oranges_r', 'cyclone_occurence': 'gray', 'wind': 'cividis', 't2m': 'coolwarm',
-                     'leads': 'cool', 'siconc': 'Blues', 'wind_quiver': 'gist_rainbow', 'siconc_diff': 'bwr',
+                     'leads': 'cool', 'siconc': 'Blues', 'wind_quiver': 'coolwarm', 'siconc_diff': 'bwr',
                      'wind_diff': 'bwr', 'lead_diff': 'bwr'}
         alpha_dict = {'msl': 1, 'cyclone_occurence': .15, 'wind': 1, 't2m': 1, 'leads': 1, 'siconc': 1, 'wind_quiver': 1
                       , 'siconc_diff': 1, 'wind_diff': 1, 'lead_diff': 1}
@@ -53,25 +53,17 @@ class VarOptions:
 class RegionalPlot:
     # Note that n * 10 can bee plotted perfectly fine
     def __init__(self, date1, date2, variable, extent=ci.arctic_extent, fig_shape=(2, 6), show=False, show_cbar=True):
-        self.fig_shape = fig_shape
-        self.extent = extent
+        self.fig_shape = (2, 6)
+        self.extent = ci.barent_extent
         self.dates = ds.time_delta(date1, date2)
-        self.show = show
+        self.show = False
         self.variable = variable
         self.plot_leads = False
-        self.show_cbar = show_cbar
-        self.split_figure = False
-
-        for var in self.variable:
-            if var == 'leads':
-                self.variable.remove('leads')
-                self.plot_leads = True
-            if var == 'siconc' or var == 'siconc_diff' or var == 'wind' or var == 'wind_diff' or var == 'lead_diff':
-                self.variable.remove(var)
-                self.split_figure = True
+        self.show_cbar = True
+        self.split_figure = True
 
         # first we need to set up the plot
-        self.full = int(np.ceil(len(self.dates) / (fig_shape[0] * fig_shape[1])))  # number of figures necessary
+        self.full = int(np.ceil(len(self.dates) / (self.fig_shape[1])))  # number of figures necessary
 
         for i in range(self.full):
             fig, ax = self.setup_plot()
@@ -81,8 +73,8 @@ class RegionalPlot:
             else:
                 self.plot_nonsplit(fig, ax, i, self.show_cbar)
 
-            show_plot(fig, f'./plots/{self.dates[self.fig_shape[0] * self.fig_shape[1] * i]}_'
-                           f'{self.dates[self.fig_shape[0] * self.fig_shape[1] * (i + 1) - 1]}.png', self.show)
+            show_plot(fig, f'./plots/{self.dates[self.fig_shape[1] * i]}_'
+                           f'{self.dates[self.fig_shape[1] * (i + 1) - 1]}.png', self.show)
 
     def setup_plot(self):
         # create figure and base map
@@ -90,7 +82,7 @@ class RegionalPlot:
                                subplot_kw={"projection": ccrs.NorthPolarStereo(-45)}, constrained_layout=True)
         fig.set_size_inches(32, 18)
         for i, a in enumerate(ax.flatten()):
-            a.coastlines(resolution='110m')
+            a.coastlines(resolution='50m')
             a.set_extent(self.extent, crs=ccrs.PlateCarree())
         return fig, ax
 
@@ -120,12 +112,12 @@ class RegionalPlot:
     def plot_split(self, fig, ax, i, show_cbar):
         images1, images2 = [], []
         for j, (a1, a2) in enumerate(zip(ax[0], ax[1])):
-            date = self.dates[j + self.fig_shape[0] * self.fig_shape[1] * i]
+            date = self.dates[j + self.fig_shape[1] * i]
             a1.set_title(ds.string_time_to_datetime(date), fontsize=20)
             a1.set_title(ds.string_time_to_datetime(date), fontsize=20)
-            print(date)
-            images2 = self.regional_var_plot(fig, a2, date, ['lead_diff'], plot_leads=False)
-            images1 = self.regional_var_plot(fig, a1, date, self.variable, plot_leads=True)
+            print(date, j)
+            images2 = self.regional_var_plot(fig, a2, date, ['wind_quiver'], plot_leads=False)
+            images1 = self.regional_var_plot(fig, a1, date, ['msl'], plot_leads=True)
 
         if show_cbar and images1 and images2:
             cbar1 = fig.colorbar(images1[0], ax=ax[0])
@@ -199,7 +191,7 @@ def regional_var_plot(date, extent=None, show=False, variable=None, plot_leads=T
 
 def lead_plot(grid, lead, fig, ax, show_cbar):
     # Plots lead fraction
-    im = ax.pcolormesh(grid.lon, grid.lat, lead.new_leads(), cmap='cool', transform=ccrs.PlateCarree())
+    im = ax.pcolormesh(grid.lon, grid.lat, lead.lead_data, cmap='cool', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.water, cmap='coolwarm', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.land, cmap='twilight', transform=ccrs.PlateCarree())
     ax.pcolormesh(grid.lon, grid.lat, lead.cloud, cmap='Blues', transform=ccrs.PlateCarree())
@@ -242,8 +234,8 @@ def variable_plot(date, fig, ax, variable, show_cbar):
         dim = (50, 50)
         lon, lat = resize(data_set.lon, dim), resize(data_set.lat, dim)
         v10, u10 = resize(lon_dir, dim), resize(lat_dir, dim)
-        im = ax.quiver(lon, lat, v10, u10, np.sqrt(v10**2+u10**2), transform=ccrs.PlateCarree(), cmap=Var.cmap,
-                       width=.005, pivot='mid', clim=(0.0, 18.0))  # scale=40, scale_units='inches'
+        im = ax.quiver(lon, lat, v10, u10, np.sqrt(v10**2+u10**2), transform=ccrs.PlateCarree(), cmap=Var.cmap, scale=150,
+                       width=.008, pivot='mid', clim=(0.0, 25.0))  # scale=40, scale_units='inches'
     elif variable == 'siconc_diff' or variable == 'wind_diff':
         # prev_date = ds.string_time_to_datetime(date)
         # prev_date = ds.datetime_to_string(prev_date - datetime.timedelta(days=1))
@@ -450,4 +442,4 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True):
 
 
 if __name__ == '__main__':
-    pass
+    RegionalPlot('20200210', '20200229', ['leads', 'wind'], ci.barent_extent)

@@ -68,9 +68,9 @@ class Era5:
     def __init__(self, variable):
         # import air pressure data
         self.var = variable
-        variable_dict = {'msl': 'data/ERA5_MSLP_2020_JanApr.nc', 'wind': 'data/ERA5_meta_1920.nc',
-                         't2m': 'data/ERA5_T2m_2020_JanApr_new.nc', 'siconc': 'data/ERA5_meta_1920.nc',
-                         'cyclone_occurence': 'data/cyc_time.nc', 'wind_quiver': 'data/ERA5_Wind_2020_JanApr.nc'}
+        variable_dict = {'msl': 'data/ERA5_METAs.nc', 'wind': 'data/ERA5_METAs.nc',
+                         't2m': 'data/ERA5_METAs.nc', 'siconc': 'data/ERA5_METAs.nc',
+                         'cyclone_occurence': 'data/ERA5_METAs.nc', 'wind_quiver': 'data/ERA5_METAs.nc'}
 
         path = variable_dict[self.var]
         data_set = nc.Dataset(path)
@@ -132,7 +132,7 @@ class Era5Regrid:
         variable_dict = {'msl': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_meta_1920_regrid.nc',
                          't2m': 'data/ERA5_2020_T2m_regrid_bil.nc', 'siconc': 'data/ERA5_meta_1920_regrid.nc',
                          'cyclone_occurence': 'data/cyc_time_regrid.nc',
-                         'wind_quiver': 'data/ERA5_Wind_2020_JanApr_regrid.nc'}
+                         'wind_quiver': 'data/ERA5_METAs_remapbil.nc'}
 
         self.var = variable
         path = variable_dict[self.var]
@@ -203,15 +203,7 @@ if __name__ == '__main__':
     #Era5('wind_quiver').get_quiver('20200101')
     #Era5('cyclone_occurence')
 
-    avg = lead_avg('20200213', '20200224')
-    print(avg.shape)
-    plt.imshow(avg)
-    plt.show()
-
-    diff = lead_avg_diff('20200220', avg)
-    im = plt.imshow(diff)
-    plt.colorbar(im)
-    plt.show()
+    Lead('20200217')
 
     pass
 
