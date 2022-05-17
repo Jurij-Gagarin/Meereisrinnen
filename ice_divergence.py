@@ -28,9 +28,16 @@ def del_matrix_neighbour(matrix):
     return np.reshape(matrix - matrix_p1, shape)
 
 
-def matrix_neighbour_diff(matrix):
-    gradv, gradh = np.gradient(matrix)
-    return .5 * (gradv + gradh)
+def matrix_neighbour_diff(x_matrix, y_matrix):
+    du = np.zeros(x_matrix.shape)
+    dv = np.zeros(x_matrix.shape)
+
+    for i in range(1, x_matrix.shape[0] - 1):
+        for j in range(1, x_matrix.shape[1] - 1):
+            du[i, j] = x_matrix[i, j+1] - x_matrix[i, j-1]
+            dv[i, j] = y_matrix[i+1, j] - y_matrix[i-1, j]
+
+    return du, dv
 
 
 def lonlat_mask(extent, lon, lat):
@@ -169,7 +176,6 @@ class Eumetsat:
     def ice_div(self, date):
         # choose the right data set corresponding to date
         dX, dY = self.get_disp(date)
-
         # observation time (48h) in seconds
         dt = 172800
 
@@ -178,9 +184,41 @@ class Eumetsat:
 
         # calculate divergence values in 1/s
         # distance between two cells is always 62.5 km (both x,y direction)
-        #du, dv = del_matrix_neighbour(u), del_matrix_neighbour(v)
-        du, dv = matrix_neighbour_diff(u), matrix_neighbour_diff(v)
-        return (du + dv)/62.5
+        #du, dv = matrix_neighbour_diff(u, v)
+
+        hy = np.zeros((dY.shape[0], 1))
+        vx = np.zeros((1, dX.shape[1]))
+        up1 = np.hstack((np.hstack((u, hy)), hy))
+        vp1 = np.vstack((vx, np.vstack((vx, v))))
+        up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
+        up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
+        du, dv = u - up1, v - vp1
+        '''
+
+        test = 80
+        test2 = 50
+        
+
+        fig, ax = plt.subplots(subplot_kw={"projection": ccrs.NorthPolarStereo(-45)})
+        ax.coastlines(resolution='50m')
+        ax.set_extent(self.extent, crs=ccrs.PlateCarree())
+
+        un = np.full(u.shape, np.nan)
+        vn = np.full(u.shape, np.nan)
+        div = (du + dv)
+        #print(u[81:83, 50:52],'\n',up1[81:83, 50:52], '\n')
+        #print(v[81:83, 50:52],'\n',vp1[81:83, 50:52], '\n')
+        #print(div[82, 50])
+        un[test:test + 10, test2:test2 + 5] = u[test:test + 10, test2:test2 + 5]
+        vn[test:test + 10, test2:test2 + 5] = v[test:test + 10, test2:test2 + 5]
+        #ax.pcolormesh(self.lon, self.lat, dv, transform=ccrs.PlateCarree())
+        print(u[test:test + 10, test2:test2 + 3], '\n')
+        print(v[test:test + 10, test2:test2 + 3], '\n')
+        print(div[test:test + 10, test2:test2 + 3])
+        ax.quiver(self.xc, self.yc, un, vn,transform=ccrs.NorthPolarStereo(-45), scale=.001)
+        plt.show()
+        '''
+        return np.nansum(np.dstack((du,dv)),2)/125
 
     def plot_div(self, dates):
         divs = []
@@ -214,6 +252,7 @@ class Eumetsat:
 
         for date, quiv, length in zip(dates, quivs, lengths):
             print(date)
+            print(self.xc.shape, self.yc.shape)
             fig, ax = plot.setup_plot(self.extent)
             im = ax.quiver(self.xc, self.yc, quiv[0] * factor, quiv[1] * factor, length * factor, scale=10, clim=(None, cap * factor),
                            transform=ccrs.NorthPolarStereo(-45), cmap='coolwarm')
@@ -418,10 +457,11 @@ class Eumetsat:
                                 f'{dates[begin]}_{dates[begin + self.prod - 1]}.png', False)
 
 
-
-
 if __name__ == '__main__':
-    Eumetsat(ci.arctic_extent).plot_drift_leads(dscience.time_delta('20200210', '20200229'), True)
+    #Eumetsat(ci.barent_extent).plot_drift_leads(dscience.time_delta('20200210', '20200229'), True)
+    #Eumetsat(ci.arctic_extent).ice_div('20200220')
+    Eumetsat(ci.barent_extent).plot_quiver_div(dscience.time_delta('20200210', '20200229'))
+    #Eumetsat(ci.arctic_extent).plot_quiver(['20200217'], False)
     #Eumetsat(ci.arctic_extent).plot_drift_leads(dscience.time_delta('20200210', '20200229'), False)
     # test new username
     #Eumetsat(ci.arctic_extent).plot_div_leads(dscience.time_delta('20200210', '20200229'), True)
