@@ -161,7 +161,7 @@ class Eumetsat:
 
     def get_disp(self, date):
         # choose the right data set corresponding to date
-        ds = self.data_sets[dscience.string_time_to_datetime(date)]
+        ds = self.data_sets[dscience.string_time_to_datetime(date) + datetime.timedelta(days=1)]
 
         # Get Variables for ice displacement in km
         # set masked values to NaN
@@ -192,33 +192,9 @@ class Eumetsat:
         vp1 = np.vstack((vx, np.vstack((vx, v))))
         up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
         up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
-        du, dv = u - up1, v - vp1
-        '''
+        du, dv = up1 - u, vp1 - v
 
-        test = 80
-        test2 = 50
-        
-
-        fig, ax = plt.subplots(subplot_kw={"projection": ccrs.NorthPolarStereo(-45)})
-        ax.coastlines(resolution='50m')
-        ax.set_extent(self.extent, crs=ccrs.PlateCarree())
-
-        un = np.full(u.shape, np.nan)
-        vn = np.full(u.shape, np.nan)
-        div = (du + dv)
-        #print(u[81:83, 50:52],'\n',up1[81:83, 50:52], '\n')
-        #print(v[81:83, 50:52],'\n',vp1[81:83, 50:52], '\n')
-        #print(div[82, 50])
-        un[test:test + 10, test2:test2 + 5] = u[test:test + 10, test2:test2 + 5]
-        vn[test:test + 10, test2:test2 + 5] = v[test:test + 10, test2:test2 + 5]
-        #ax.pcolormesh(self.lon, self.lat, dv, transform=ccrs.PlateCarree())
-        print(u[test:test + 10, test2:test2 + 3], '\n')
-        print(v[test:test + 10, test2:test2 + 3], '\n')
-        print(div[test:test + 10, test2:test2 + 3])
-        ax.quiver(self.xc, self.yc, un, vn,transform=ccrs.NorthPolarStereo(-45), scale=.001)
-        plt.show()
-        '''
-        return np.nansum(np.dstack((du,dv)),2)/125
+        return np.nansum(np.dstack((du, dv)), 2)/125
 
     def plot_div(self, dates):
         divs = []
@@ -355,7 +331,7 @@ class Eumetsat:
                 im = ax.pcolormesh(self.lon, self.lat, div, transform=ccrs.PlateCarree(), vmax=d_cap, vmin=-d_cap,
                                    cmap='bwr')
             cbar = fig.colorbar(im, ax=axs[1])
-            cbar.set_label(r'ice divergence/convergence in $10^{-6}/s$', size=18)
+            cbar.set_label(r'ice divergence (pos)/convergence (neg) in $10^{-6}/s$', size=18)
             cbar.ax.tick_params(labelsize=15)
             plot.show_plot(fig, f'./plots/ice divergence/{self.file}/divergence_drift_'
                                 f'{dates[begin]}_{dates[begin + self.prod - 1]}.png', False)
@@ -400,7 +376,7 @@ class Eumetsat:
                 im = ax.pcolormesh(self.lon, self.lat, div, transform=ccrs.PlateCarree(), vmax=d_cap, vmin=-d_cap,
                                    cmap='bwr')
             cbar = fig.colorbar(im, ax=axs[1])
-            cbar.set_label(r'ice divergence/convergence in $10^{-6}/s$', size=18)
+            cbar.set_label(r'ice divergence (pos)/convergence (neg) in $10^{-6}/s$', size=18)
             cbar.ax.tick_params(labelsize=15)
             plot.show_plot(fig, f'./plots/ice divergence/{self.file}/divergence_{path}_'
                                 f'{dates[begin]}_{dates[begin + self.prod - 1]}.png', False)
@@ -458,11 +434,18 @@ class Eumetsat:
 
 
 if __name__ == '__main__':
-    #Eumetsat(ci.barent_extent).plot_drift_leads(dscience.time_delta('20200210', '20200229'), True)
-    #Eumetsat(ci.arctic_extent).ice_div('20200220')
-    Eumetsat(ci.barent_extent).plot_quiver_div(dscience.time_delta('20200210', '20200229'))
-    #Eumetsat(ci.arctic_extent).plot_quiver(['20200217'], False)
-    #Eumetsat(ci.arctic_extent).plot_drift_leads(dscience.time_delta('20200210', '20200229'), False)
-    # test new username
-    #Eumetsat(ci.arctic_extent).plot_div_leads(dscience.time_delta('20200210', '20200229'), True)
-    #Eumetsat(ci.arctic_extent).plot_div_leads(dscience.time_delta('20200210', '20200229'), False)
+    # all plots related to ice drift Barent Sea
+    # Eumetsat(ci.barent_extent).plot_drift_leads(dscience.time_delta('20200210', '20200228'), True)
+    # Eumetsat(ci.barent_extent).plot_drift_leads(dscience.time_delta('20200210', '20200228'), False)
+    # Eumetsat(ci.barent_extent).plot_quiver_div(dscience.time_delta('20200210', '20200228'))
+    # Eumetsat(ci.barent_extent).plot_div_leads(dscience.time_delta('20200210', '20200228'), True)
+    # Eumetsat(ci.barent_extent).plot_div_leads(dscience.time_delta('20200210', '20200228'), False)
+
+    # all plots related to ice drift entire Arctic
+    Eumetsat(ci.arctic_extent).plot_drift_leads(dscience.time_delta('20200210', '20200228'), True)
+    Eumetsat(ci.arctic_extent).plot_drift_leads(dscience.time_delta('20200210', '20200228'), False)
+    Eumetsat(ci.arctic_extent).plot_quiver_div(dscience.time_delta('20200210', '20200228'))
+    Eumetsat(ci.arctic_extent).plot_div_leads(dscience.time_delta('20200210', '20200228'), True)
+    Eumetsat(ci.arctic_extent).plot_div_leads(dscience.time_delta('20200210', '20200228'), False)
+
+    pass
