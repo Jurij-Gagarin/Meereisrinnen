@@ -2,6 +2,7 @@ import datetime
 import data_science as ds
 import cftime
 import netCDF4 as nc
+import ice_divergence as id
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -96,10 +97,18 @@ class Era5:
         t1, t2 = cftime.date2index([d1, d2], self.time)
 
         # Calculate mean variable of the given date
-        mean_var = np.zeros(self.variable[0].shape)
-        for t in range(t1, t2 + 1):
-            mean_var = np.add(mean_var, self.variable[t])
-        return ds.variable_manip(self.var, .25 * mean_var)
+        if self.var == 'wind_quiver':
+            mean_u10, mean_v10 = np.zeros(self.u10[0].shape), np.zeros(self.v10[0].shape)
+            for t in range(t1, t2 + 1):
+                mean_u10 += self.u10[t]
+                mean_v10 += self.v10[t]
+            return .25 * mean_u10, .25 * mean_v10
+
+        else:
+            mean_var = np.zeros(self.variable[0].shape)
+            for t in range(t1, t2 + 1):
+                mean_var = np.add(mean_var, self.variable[t])
+            return ds.variable_manip(self.var, .25 * mean_var)
 
     def get_quiver(self, date):
         # Get time index
@@ -124,6 +133,12 @@ class Era5:
             avg += self.get_variable(date)
 
         self.var_avg = avg / len(dates)
+
+    def get_div(self, date):
+        u10, v10 = self.get_variable(date)
+        du, dv = id.matrix_neighbour_diff(u10, v10)
+        return (du + dv)/15
+
 
 
 class Era5Regrid:

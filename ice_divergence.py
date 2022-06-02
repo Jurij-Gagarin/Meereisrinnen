@@ -29,13 +29,16 @@ def del_matrix_neighbour(matrix):
 
 
 def matrix_neighbour_diff(x_matrix, y_matrix):
-    du = np.zeros(x_matrix.shape)
-    dv = np.zeros(x_matrix.shape)
-
-    for i in range(1, x_matrix.shape[0] - 1):
-        for j in range(1, x_matrix.shape[1] - 1):
-            du[i, j] = x_matrix[i, j+1] - x_matrix[i, j-1]
-            dv[i, j] = y_matrix[i+1, j] - y_matrix[i-1, j]
+    print(x_matrix.shape, y_matrix.shape)
+    div_shape = x_matrix.shape
+    hy = np.empty((div_shape[0], 1))
+    vx = np.empty((1, div_shape[1]))
+    hy[:], vx[:] = np.nan, np.nan
+    up1 = np.hstack((np.hstack((x_matrix, hy)), hy))
+    vp1 = np.vstack((vx, np.vstack((vx, y_matrix))))
+    up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
+    up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
+    du, dv = up1 - x_matrix, vp1 - y_matrix
 
     return du, dv
 
@@ -186,15 +189,9 @@ class Eumetsat:
         # distance between two cells is always 62.5 km (both x,y direction)
         #du, dv = matrix_neighbour_diff(u, v)
 
-        hy = np.zeros((dY.shape[0], 1))
-        vx = np.zeros((1, dX.shape[1]))
-        up1 = np.hstack((np.hstack((u, hy)), hy))
-        vp1 = np.vstack((vx, np.vstack((vx, v))))
-        up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
-        up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
-        du, dv = up1 - u, vp1 - v
+        du, dv = matrix_neighbour_diff(u, v)
 
-        return np.nansum(np.dstack((du, dv)), 2)/125
+        return (du + dv)/125
 
     def ice_shear(self, date):
         # choose the right data set corresponding to date
@@ -209,15 +206,16 @@ class Eumetsat:
         # distance between two cells is always 62.5 km (both x,y direction)
         # du, dv = matrix_neighbour_diff(u, v)
 
-        hy = np.zeros((dY.shape[0], 1))
-        vx = np.zeros((1, dX.shape[1]))
+        hy = np.empty((dY.shape[0], 1))
+        vx = np.empty((1, dX.shape[1]))
+        hy[:], vx[:] = np.nan, np.nan
         up1 = np.hstack((np.hstack((u, hy)), hy))
         vp1 = np.vstack((vx, np.vstack((vx, v))))
         up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
         up1, vp1 = np.delete(up1, 0, 1), np.delete(vp1, -1, 0)
         du, dv = up1 - u, vp1 - v
 
-        return np.nansum(np.dstack((du, -dv)), 2) / 125
+        return (du - dv) / 125
 
     def plot_div(self, dates):
         divs = []
@@ -406,6 +404,7 @@ class Eumetsat:
         im = None
         lon, lat = leads.CoordinateGrid().lon, leads.CoordinateGrid().lat
         m_lon, m_lat = leads.Era5('msl').lon, leads.Era5('msl').lat
+        path = None
 
         for date in dates:
             msl = leads.Era5('msl').get_variable(date)
@@ -453,6 +452,7 @@ class Eumetsat:
         lon, lat = leads.CoordinateGrid().lon, leads.CoordinateGrid().lat
         m_lon, m_lat = leads.Era5('msl').lon, leads.Era5('msl').lat
         factor = 1000 / 172800
+        path = None
 
         for date in dates:
             msl = leads.Era5('msl').get_variable(date)
@@ -500,7 +500,7 @@ if __name__ == '__main__':
     all_dates = dscience.time_delta('20200210', '20200228')
     # Eumetsat(ci.barent_extent).plot_drift_leads(all_dates, True)
     # Eumetsat(ci.barent_extent).plot_drift_leads(all_dates, False)
-    # Eumetsat(ci.barent_extent).plot_quiver_div(all_dates)
+    # Eumetsat(ci.barent_extent).plot_drift_div(all_dates)
     # Eumetsat(ci.barent_extent).plot_div_leads(all_dates, True)
     # Eumetsat(ci.barent_extent).plot_div_leads(all_dates, False)
     # Eumetsat(ci.barent_extent).plot_drift_vort(all_dates)
@@ -511,6 +511,5 @@ if __name__ == '__main__':
     # Eumetsat(ci.arctic_extent).plot_drift_div(all_dates)
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, True)
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, False)
-    Eumetsat(ci.arctic_extent).plot_drift_vort(all_dates)
-
+    # Eumetsat(ci.arctic_extent).plot_drift_vort(all_dates)
     pass
