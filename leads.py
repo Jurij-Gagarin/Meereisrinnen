@@ -95,7 +95,6 @@ class Era5:
         d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
         d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
         t1, t2 = cftime.date2index([d1, d2], self.time)
-
         # Calculate mean variable of the given date
         if self.var == 'wind_quiver':
             mean_u10, mean_v10 = np.zeros(self.u10[0].shape), np.zeros(self.v10[0].shape)
@@ -137,8 +136,7 @@ class Era5:
     def get_div(self, date):
         u10, v10 = self.get_variable(date)
         du, dv = id.matrix_neighbour_diff(u10, v10)
-        return (du + dv)/15
-
+        return (du + dv)/60000
 
 
 class Era5Regrid:

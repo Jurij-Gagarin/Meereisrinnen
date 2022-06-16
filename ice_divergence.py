@@ -29,7 +29,6 @@ def del_matrix_neighbour(matrix):
 
 
 def matrix_neighbour_diff(x_matrix, y_matrix):
-    print(x_matrix.shape, y_matrix.shape)
     div_shape = x_matrix.shape
     hy = np.empty((div_shape[0], 1))
     vx = np.empty((1, div_shape[1]))
