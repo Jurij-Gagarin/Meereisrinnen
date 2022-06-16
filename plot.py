@@ -31,7 +31,7 @@ class VarOptions:
                       'lead_diff': None}
         unit_dict = {'msl': 'hPa', 'leads': '%', 'cyclone_occurence': '%', 'wind': 'm/s', 't2m': '°K', 'siconc': '%',
                      'wind_quiver': 'm/s', 'siconc_diff': '%', 'wind_diff': 'm/s', 'lead_diff': '%'}
-        name_dict = {'cyclone_occurence': 'cyclone frequency', 'leads': 'daily new lead fraction', 'wind': 'wind speed',
+        name_dict = {'cyclone_occurence': 'cyclone frequency', 'leads': 'lead fraction', 'wind': 'wind speed',
                      't2m': 'two meter temperature', 'msl': 'mean sea level pressure', 'siconc': 'sea ice concentration'
                      , 'wind_quiver': 'windspeed', 'siconc_diff': 'sea ice concentration difference',
                      'wind_diff': 'wind difference', 'lead_diff': 'lead fraction difference'}
@@ -377,20 +377,26 @@ def variable_pixel_pixel_density(date1, date2, extent):
     plt.show()
 
 
-def variables_against_time(date1, date2, extent, var1, var2, spline=False, show=False):
-    from dcor import distance_correlation
+def variables_against_time(date1, date2, extent, var1, var2, spline=False, show=False, rolling_avg=False, w=7):
+    # from dcor import distance_correlation
     # This shows you how two variables change with respect to time.
     dates = ds.string_time_to_datetime(ds.time_delta(date1, date2))
     fig, ax = plt.subplots(figsize=(20, 10))
     ax_twin = ax.twinx()
     Var1, Var2 = VarOptions(var1), VarOptions(var2)
-    title = f'Changes in {Var1.name} and {Var2.name} in the {ci.extent_dict[extent]}.'
+    title = f'Daily averages of {Var1.name} and {Var2.name} in the {ci.extent_dict[extent]} region.'
     y, y_err, i = [], [], 0
+    once = True
 
     for a, v, Var in zip([ax, ax_twin], [var1, var2], [Var1, Var2]):
-        var = ds.variable_daily_avg(date1, date2, extent, v)
-        y.append(var[0])
-        y_err.append(var[1])
+        y, y_err = ds.variable_daily_avg(date1, date2, extent, v)
+        if rolling_avg:
+            y = np.convolve(y, np.ones(w), 'valid') / w
+            y_err = np.convolve(y_err, np.ones(w), 'valid') / w
+            if once:
+                dates = dates[w-1:]
+                title = f'Rolling averages over last {w} days of ' + title
+                once = False
 
         if spline:
             from scipy.interpolate import CubicSpline
@@ -401,22 +407,27 @@ def variables_against_time(date1, date2, extent, var1, var2, spline=False, show=
             y_new = f(x_new)
             a.plot(x_new, y_new, c=Var.color, linestyle='--')
         else:
-            a.plot(dates, y[i], c=Var.color, linestyle='--')
-            a.fill_between(dates, (np.array(y[i]) - np.array(y_err[i])), (np.array(y[i]) + np.array(y_err[i])),
+
+            a.plot(dates, y, c=Var.color, linestyle='--')
+            a.fill_between(dates, (np.array(y) - np.array(y_err)), (np.array(y) + np.array(y_err)),
                            color=Var.color, alpha=.2)
 
-        a.set_ylabel(f'{Var.name}', fontsize=15)
+        a.set_ylabel(f'{Var.label()}', fontsize=15)
         a.yaxis.label.set_color(Var.color)
         a.tick_params(axis='y', colors=Var.color, labelsize=15)
         i += 1
 
     ax.tick_params(axis='x', labelsize=15)
     # title += f' R = {hf.round_sig(np.corrcoef(y[0], y[1])[0, 1])}'
-    title += f' R = {hf.round_sig(distance_correlation(y[0], y[1]))}'
+    # title += f' R = {hf.round_sig(distance_correlation(y[0], y[1]))}' may add this later on
     ax.set_title(title, fontsize=15)
 
-    show_plot(fig, f'./plots/{var1}_{var2}_{ds.string_time_to_datetime(date1)}_'
-                   f'{ds.string_time_to_datetime(date2)}_{ci.extent_dict[extent]}.png', show)
+    if rolling_avg:
+        show_plot(fig, f'./plots/roll_{var1}_{var2}_{ds.string_time_to_datetime(date1)}_'
+                       f'{ds.string_time_to_datetime(date2)}_{ci.extent_dict[extent]}.png', show)
+    else:
+        show_plot(fig, f'./plots/{var1}_{var2}_{ds.string_time_to_datetime(date1)}_'
+                       f'{ds.string_time_to_datetime(date2)}_{ci.extent_dict[extent]}.png', show)
 
 
 def plot_lead_from_vars(date1, date2, extent, var1, var2):
@@ -441,4 +452,8 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True):
 
 
 if __name__ == '__main__':
-    RegionalPlot('20200210', '20200229', ['leads', 'wind'], ci.barent_extent)
+    # RegionalPlot('20200210', '20200229', ['leads', 'wind'], ci.barent_extent)
+    variables_against_time('20200101', '20200331', ci.barent_extent, 'leads', 'cyclone_occurence', rolling_avg=True)
+    variables_against_time('20200101', '20200331', ci.barent_extent, 'leads', 'wind', rolling_avg=True)
+    variables_against_time('20200101', '20200331', ci.barent_extent, 'leads', 'siconc', rolling_avg=True)
+    pass

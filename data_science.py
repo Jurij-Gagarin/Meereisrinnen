@@ -151,7 +151,7 @@ def lead_average(date1, date2, extent):
 
     for date in dates:
         lead = leads.Lead(date)
-        lead = select_area(grid, lead, lead.new_leads(), extent)[2]
+        lead = select_area(grid, lead, 100 * lead.lead_data, extent)[2]
         cum_leads = sum_nan_arrays(cum_leads, lead)
         row, col = np.where(~np.isnan(lead))
         count_values[row, col] += 1
@@ -185,7 +185,7 @@ def variable_daily_avg(date1, date2, extent, variable):
     dates = time_delta(date1, date2)
     var_sum, var_ste = np.zeros(len(dates)), np.zeros(len(dates))
     for i, date in enumerate(dates):
-        print(date)
+        # print(date)
         if variable == 'leads':
             var = lead_average(date, date, extent)
         else:

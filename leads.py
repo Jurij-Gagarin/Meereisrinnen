@@ -142,9 +142,9 @@ class Era5:
 class Era5Regrid:
     def __init__(self, lead, variable):
         # import air pressure data
-        variable_dict = {'msl': 'data/ERA5_2020_MSL_regrid_bil.nc', 'wind': 'data/ERA5_meta_1920_regrid.nc',
-                         't2m': 'data/ERA5_2020_T2m_regrid_bil.nc', 'siconc': 'data/ERA5_meta_1920_regrid.nc',
-                         'cyclone_occurence': 'data/cyc_time_regrid.nc',
+        variable_dict = {'msl': 'data/ERA5_METAs_remapbil.nc', 'wind': 'data/ERA5_METAs_remapbil.nc',
+                         't2m': 'data/ERA5_METAs_remapbil.nc', 'siconc': 'data/ERA5_METAs_remapbil.nc',
+                         'cyclone_occurence': 'data/ERA5_METAs_remapbil.nc',
                          'wind_quiver': 'data/ERA5_METAs_remapbil.nc'}
 
         self.var = variable
