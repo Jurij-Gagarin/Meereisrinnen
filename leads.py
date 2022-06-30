@@ -213,7 +213,7 @@ if __name__ == '__main__':
     #Era5('msl')
     #Era5('siconc')
     #Era5('t2m')
-    Era5('wind_quiver')
+    print(Era5('wind_quiver').time[:])
     #Era5('cyclone_occurence')
 
 

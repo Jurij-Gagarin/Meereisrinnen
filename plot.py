@@ -453,7 +453,7 @@ def plots_for_case(case, extent=None, var=None, plot_lead=True):
 
 if __name__ == '__main__':
     # RegionalPlot('20200210', '20200229', ['leads', 'wind'], ci.barent_extent)
-    variables_against_time('20200101', '20200331', ci.barent_extent, 'leads', 'cyclone_occurence', rolling_avg=True)
-    variables_against_time('20200101', '20200331', ci.barent_extent, 'leads', 'wind', rolling_avg=True)
-    variables_against_time('20200101', '20200331', ci.barent_extent, 'leads', 'siconc', rolling_avg=True)
+    variables_against_time('20200101', '20200331', ci.barent_extent, 'msl', 'cyclone_occurence', rolling_avg=True)
+    variables_against_time('20200101', '20200331', ci.barent_extent, 'cyclone_occurence', 'wind', rolling_avg=True)
+    #variables_against_time('20200101', '20200331', ci.barent_extent, 'leads', 'siconc', rolling_avg=True)
     pass
