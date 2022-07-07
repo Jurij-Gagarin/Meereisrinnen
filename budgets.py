@@ -22,6 +22,8 @@ class IceData:
         self.time = None
         self.xc = 1000*self.ds_spring['xc'][:]
         self.yc = 1000*self.ds_spring['yc'][:]
+        self.step_size = 62500
+        self.dt = 24*60*60
 
     def get_variable(self, date, variable='siconc'):
         data_set = None
@@ -100,7 +102,7 @@ class IceData:
                 for a in ax:
                     print(dates[count])
                     im = a.quiver(self.xc, self.yc, us[count], vs[count], lengths[count], clim=(min_cap, max_cap),
-                                      transform=ccrs.NorthPolarStereo(-45), cmap='coolwarm', scale=8)
+                                  transform=ccrs.NorthPolarStereo(-45), cmap='coolwarm', scale=8)
                     a.set_title(str(ds.string_time_to_datetime(dates[count])), fontsize=20)
                     count += 1
             cbar = fig.colorbar(im, ax=axs)
@@ -108,12 +110,57 @@ class IceData:
             plot.show_plot(fig, f'./plots/budgets/drift/drift_{dates[count - self.nrows * self.ncols]}-{dates[count]}.png',
                            False)
 
+    def divergence(self, ux, uy, C):
+        du = (ux[:, :-2] - ux[:, 2:])[1:-1]
+        dv = (uy[:-2] - uy[2:])[:, 1:-1]
+
+        return np.multiply(-C, (du + dv)/(2*self.step_size))
+
+    def advection(self, ux, uy, C):
+        dCdx = (C[:, :-2] - C[:, 2:])[1:-1]
+        dCdy = (C[:-2] - C[2:])[:, 1:-1]
+
+        return -np.multiply(ux, dCdx) - np.multiply(uy, dCdy)
+
+    def intensification(self, C1, C2, dt):
+        return (C2 - C1) / dt
+
+    def get_budgets(self, date1, date2):
+        dates = ds.time_delta(date1, date2)
+        advs, divs, ints, ress = [], [], [], []
+
+        for date1, date2 in zip(dates[:-1], dates[1:]):
+            C1, C2 = self.get_variable(date2, 'siconc'), self.get_variable(date2, 'siconc')
+            ux, uy = self.get_drift(date2)
+
+            advs.append(self.advection(ux, uy, C2))
+            divs.append(self.divergence(ux, uy, C2))
+            ints.append(self.intensification(C1, C2, self.dt))
+            ress.append(ints[-1] - advs[-1] - divs[-1])
+
+        return dates, advs, divs, ints, ress
+
+
+
 
 
 
 
 
 if __name__ == '__main__':
-    IceData().plot_drift('20191201', '20200331')
+    arr1 = np.random.randint(10, size=(10, 10))
+    arr2 = np.random.randint(10, size=(10, 10))
+    print(arr1)
+    print(arr2)
+    print(np.multiply(arr1, arr2))
+    #print(arr)
+    #print()
+    #print(arr[:-2])
+    #print(arr[2:])
+    #print()
+    #print(arr[:, :-2])
+    #print(arr[:, 2:])
+    #print((arr[:-2]-arr[2:])[:, 1:-1])
+    # IceData().plot_drift('20191201', '20200331')
     pass
 
