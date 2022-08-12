@@ -11,6 +11,9 @@ import case_information as ci
 import plot
 
 
+def max_matrix(cap, M):
+    return max(cap, abs(np.nanmin(M)), np.nanmax(M))
+
 class IceData:
     def __init__(self, extent=ci.arctic_extent):
         self.ds_spring = nc.Dataset('./data/ERA5_METAs_remapbil_drift.nc')
@@ -24,6 +27,9 @@ class IceData:
         self.yc = 1000*self.ds_spring['yc'][:]
         self.step_size = 62500
         self.dt = 24*60*60
+
+        self.advs, self.divs, self.ints, self.ress = [], [], [], []
+        self.adv_cap, self.div_cap, self.int_cap, self.res_cap = 0, 0, 0, 0
 
     def get_variable(self, date, variable='siconc'):
         data_set = None
@@ -41,7 +47,7 @@ class IceData:
         mean_var = np.zeros(var[0].shape)
         for t in range(t1, t2+1):
             mean_var += var[t]
-
+        mean_var[mean_var <= 0.0] = np.nan
         return .25 * mean_var
 
     def get_drift(self, date):
@@ -72,7 +78,7 @@ class IceData:
                 for a in ax:
                     print(dates[count])
                     im = a.pcolormesh(self.xc, self.yc, self.get_variable(dates[count]), vmin=0, vmax=1,
-                                      transform=ccrs.NorthPolarStereo(-45), cmap='Blues')
+                                      transform=ccrs.NorthPolarStereo(-45), cmap='viridis')
                     a.set_title(str(ds.string_time_to_datetime(dates[count])), fontsize=20)
                     count += 1
             cbar = fig.colorbar(im, ax=axs)
@@ -111,34 +117,85 @@ class IceData:
                            False)
 
     def divergence(self, ux, uy, C):
-        du = (ux[:, :-2] - ux[:, 2:])[1:-1]
-        dv = (uy[:-2] - uy[2:])[:, 1:-1]
+        du = (ux[:, 2:] - ux[:, :-2])[1:-1]
+        dv = (uy[2:] - uy[:-2])[:, 1:-1]
 
-        return np.multiply(-C, (du + dv)/(2*self.step_size))
+        '''
+        n = 80
+        m = 50
+        #plt.imshow(C, cmap='bwr')
+        plt.imshow(dv[n-2:n+2, m-2:m+2])
+        plt.show()
+        print('ux:', ux[n-2:n+2, m-2:m+2], '\n')
+        print('uy:', uy[n-2:n+2, m-2:m+2], '\n')
+        print('C:', C[n-2:n+2, m-2:m+2], '\n')
+
+        res = np.multiply(-C[1:-1, 1:-1], (du + dv) / (2 * self.step_size))
+        print('res:', res[n-2:n+2, m-2:m+2], '\n')
+        '''
+        return np.multiply(-C[1:-1, 1:-1], (du + dv)/(2*self.step_size))
 
     def advection(self, ux, uy, C):
-        dCdx = (C[:, :-2] - C[:, 2:])[1:-1]
-        dCdy = (C[:-2] - C[2:])[:, 1:-1]
+        dCdx = (C[:, :-2] - C[:, 2:])[1:-1] / (2*self.step_size)
+        dCdy = (C[:-2] - C[2:])[:, 1:-1] / (2*self.step_size)
 
-        return -np.multiply(ux, dCdx) - np.multiply(uy, dCdy)
+        #return C[1:-1, 1:-1]
+        return -np.multiply(ux[1:-1, 1:-1], dCdx) - np.multiply(uy[1:-1, 1:-1], dCdy)
 
-    def intensification(self, C1, C2, dt):
-        return (C2 - C1) / dt
+    def intensification(self, C1, C2):
+        return (C2 - C1)[1:-1, 1:-1] / self.dt
 
     def get_budgets(self, date1, date2):
         dates = ds.time_delta(date1, date2)
-        advs, divs, ints, ress = [], [], [], []
 
         for date1, date2 in zip(dates[:-1], dates[1:]):
-            C1, C2 = self.get_variable(date2, 'siconc'), self.get_variable(date2, 'siconc')
+            C1, C2 = self.get_variable(date1, 'siconc'), self.get_variable(date2, 'siconc')
             ux, uy = self.get_drift(date2)
 
-            advs.append(self.advection(ux, uy, C2))
-            divs.append(self.divergence(ux, uy, C2))
-            ints.append(self.intensification(C1, C2, self.dt))
-            ress.append(ints[-1] - advs[-1] - divs[-1])
+            self.advs.append(self.advection(ux, uy, C2))
+            self.adv_cap = max_matrix(self.adv_cap, self.advs[-1])
+            self.divs.append(self.divergence(ux, uy, C2))
+            self.div_cap = max_matrix(self.div_cap, self.divs[-1])
+            self.ints.append(self.intensification(C1, C2))
+            self.int_cap = max_matrix(self.int_cap, self.ints[-1])
+            self.ress.append(self.ints[-1] - self.advs[-1] - self.divs[-1])
+            self.res_cap = max_matrix(self.res_cap, self.ress[-1])
 
-        return dates, advs, divs, ints, ress
+        return dates[1:]
+
+    def plot_budgets(self, date1, date2):
+        dates = self.get_budgets(date1, date2)
+
+        for i in range(int(np.floor(len(dates) / 2))):
+            fig, axs = self.setup_plot()
+            print(f'working on {dates[2*i]} to {dates[2*i+1]}')
+            once = True
+
+            for a1, a2, var1, var2, cap, title in zip(axs[0], axs[1],
+                                                      [self.advs[2*i], self.divs[2*i], self.ints[2*i], self.ress[2*i]],
+                                                      [self.advs[2*i+1], self.divs[2*i+1], self.ints[2*i+1], self.ress[2*i+1]],
+                                                      [self.adv_cap, self.div_cap, self.int_cap, self.res_cap],
+                                                      ['advection', 'divergence', 'intensification', 'residual']):
+                a1.pcolormesh(self.xc[1:-1], self.yc[1:-1], var1, transform=ccrs.NorthPolarStereo(-45), vmin=-cap, vmax=cap,
+                              cmap='coolwarm')
+                a1.set_title(title, fontsize=20)
+                if once:
+                    a1.text(-0.01, 0.55, ds.string_time_to_datetime(dates[2*i]), va='bottom', ha='center',
+                            rotation='vertical', rotation_mode='anchor', transform=a1.transAxes, fontsize=20)
+                    a2.text(-0.01, 0.55, ds.string_time_to_datetime(dates[2*i + 1]), va='bottom', ha='center',
+                            rotation='vertical', rotation_mode='anchor', transform=a2.transAxes, fontsize=20)
+                    once = False
+
+                im = a2.pcolormesh(self.xc[1:-1], self.yc[1:-1], var2, transform=ccrs.NorthPolarStereo(-45), vmin=-cap, vmax=cap,
+                                   cmap='coolwarm')
+                fig.colorbar(im, orientation='horizontal', ax=a2)
+
+            axs[0,-1].set_ylabel(ds.string_time_to_datetime(dates[2*i+1]), fontsize=20)
+
+            plot.show_plot(fig, f'./plots/budgets/budgets/budgets_{dates[2*i]}_{dates[2*i+1]}.png', False)
+
+
+
 
 
 
@@ -148,19 +205,11 @@ class IceData:
 
 
 if __name__ == '__main__':
-    arr1 = np.random.randint(10, size=(10, 10))
-    arr2 = np.random.randint(10, size=(10, 10))
-    print(arr1)
-    print(arr2)
-    print(np.multiply(arr1, arr2))
-    #print(arr)
-    #print()
-    #print(arr[:-2])
-    #print(arr[2:])
-    #print()
-    #print(arr[:, :-2])
-    #print(arr[:, 2:])
-    #print((arr[:-2]-arr[2:])[:, 1:-1])
-    # IceData().plot_drift('20191201', '20200331')
+
+    #IceData().plot_siconc('20191201', '20200331')
+    #IceData().plot_siconc('20191201', '20191210')
+
+    IceData().plot_budgets('20200201', '20200229')
+
     pass
 
