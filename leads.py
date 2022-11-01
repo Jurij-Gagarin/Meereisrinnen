@@ -6,6 +6,9 @@ import ice_divergence as id
 import matplotlib.pyplot as plt
 import numpy as np
 
+import case_information as ci
+import cartopy.crs as ccrs
+
 
 class Lead:
     def __init__(self, date):
@@ -64,6 +67,45 @@ class CoordinateGrid:
         np.savetxt('yvals.txt', self.lat.flatten(), delimiter=' ')
         np.savetxt('xvals.txt', self.lon.flatten(), delimiter=' ')
 
+    def plot_grid(self, extent):
+        #ccrs.NorthPolarStereo(-45)
+        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={"projection": ccrs.Orthographic(0, 90)})
+        ax.gridlines()
+        ax.set_global()
+        ax.coastlines(resolution='50m')
+        extent = extent if extent else ci.arctic_extent
+        ax.set_extent(extent, crs=ccrs.PlateCarree())
+
+        print(np.ones(self.lon.shape).shape)
+        ax.scatter(self.lon, self.lat, transform=ccrs.PlateCarree(), s=1, alpha=1)
+        plt.show()
+
+    def get_weights(self):
+        dim = self.lon.shape
+        weights = np.empty(dim)
+
+        for i in range(dim[0] - 1):
+            for j in range(dim[1] - 1):
+                #dphi = self.lat[i+1, j+1] - self.lat[i, j]
+                #weights[i, j] = abs(dphi*(np.cos(np.radians(self.lon[i, j])) - np.cos(np.radians(self.lon[i+1, j+1]))))
+                weights[i, j] = abs(np.sin(np.radians(self.lat[i, j])))
+
+        return weights
+
+    def plot_weights(self, extent=None):
+        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={"projection": ccrs.NearsidePerspective(-45,90)})
+        ax.gridlines()
+        ax.set_global()
+        ax.coastlines(resolution='50m')
+        extent = extent if extent else ci.arctic_extent
+        ax.set_extent(extent, crs=ccrs.PlateCarree())
+
+        im = ax.pcolormesh(self.lon, self.lat, self.get_weights(), transform=ccrs.NearsidePerspective())
+        fig.colorbar(im)
+        plt.show()
+
+
+
 
 class Era5:
     def __init__(self, variable):
@@ -109,6 +151,19 @@ class Era5:
                 mean_var = np.add(mean_var, self.variable[t])
             return ds.variable_manip(self.var, .25 * mean_var)
 
+    def get_variable_drift(self, date):
+        # Get time index
+        # datetime(year, month, day, hour, minute, second, microsecond)
+        d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0) - datetime.timedelta(hours=12)
+        d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0) + datetime.timedelta(hours=12)
+        t1, t2 = cftime.date2index([d1, d2], self.time)
+
+        # Calculate mean variable of the given date
+        mean_var = np.zeros(self.variable[0].shape)
+        for t in range(t1, t2 + 1):
+            mean_var = np.add(mean_var, self.variable[t])
+        return ds.variable_manip(self.var, 1/len(list(range(t1, t2 + 1))) * mean_var)
+
     def get_quiver(self, date):
         # Get time index
         # datetime(year, month, day, hour, minute, second, microsecond)
@@ -140,7 +195,7 @@ class Era5:
 
 
 class Era5Regrid:
-    def __init__(self, lead, variable):
+    def __init__(self, variable):
         # import air pressure data
         variable_dict = {'msl': 'data/ERA5_METAs_remapbil.nc', 'wind': 'data/ERA5_METAs_remapbil.nc',
                          't2m': 'data/ERA5_METAs_remapbil.nc', 'siconc': 'data/ERA5_METAs_remapbil.nc',
@@ -149,10 +204,10 @@ class Era5Regrid:
 
         self.var = variable
         path = variable_dict[self.var]
-        self.lead = lead
+        #self.lead = lead
 
         data_set = nc.Dataset(path)
-        self.shape = lead.old_shape
+        self.shape = Lead('20200101').old_shape
         self.time = data_set['time']
         self.lon = np.reshape(data_set.variables['lon'], self.shape)
         self.lat = np.reshape(data_set.variables['lat'], self.shape)
@@ -213,8 +268,9 @@ if __name__ == '__main__':
     #Era5('msl')
     #Era5('siconc')
     #Era5('t2m')
-    print(Era5('wind_quiver').time[:])
+    #print(Era5('wind_quiver').time[:])
     #Era5('cyclone_occurence')
+    CoordinateGrid().plot_weights(None)
 
 
     pass

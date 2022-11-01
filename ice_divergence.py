@@ -9,6 +9,8 @@ import plot as pl
 import datetime
 import case_information as ci
 import data_science as dscience
+import cftime
+
 
 
 def dt_from_path(path):
@@ -151,6 +153,10 @@ class Eumetsat:
         self.prod = self.ncols
         self.file = file_dict[self.extent]
 
+        self.time = None
+        self.skip = 2
+        self.ds_drift = nc.Dataset('./data/drift_combined.nc')
+
         for path in self.path_list:
             ds = nc.Dataset(self.dir + '/' + path)
             date = (datetime.datetime(1978, 1, 1, 0, 0, 0) + datetime.timedelta(seconds=int(ds['time'][0]))).date()
@@ -174,6 +180,15 @@ class Eumetsat:
         dX[dX.mask] = np.nan
         dX[self.lonlat_mask] = np.nan
         return dX, dY
+
+    def get_drift(self, date):
+        d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 12, 0, 0, 0) - datetime.timedelta(days=1)
+        self.time = self.ds_drift['time']
+        t1 = cftime.date2index(d1, self.time)
+
+        # return drift speed in m/s
+        return [1000 * self.ds_drift['dX'][t1] / 172800, 1000 * self.ds_drift['dY'][t1] / 172800]
+        pass
 
     def ice_div(self, date):
         # choose the right data set corresponding to date
@@ -450,12 +465,14 @@ class Eumetsat:
         im = None
         lon, lat = leads.CoordinateGrid().lon, leads.CoordinateGrid().lat
         m_lon, m_lat = leads.Era5('msl').lon, leads.Era5('msl').lat
-        factor = 1000 / 172800
+        factor = 100
         path = None
+        print(self.xc.size)
+        self.xc, self.yc = self.xc[::self.skip], self.yc[::self.skip]
 
         for date in dates:
-            msl = leads.Era5('msl').get_variable(date)
-            quiv = self.get_disp(date)
+            msl = leads.Era5('msl').get_variable_drift(date)
+            quiv = self.get_drift(date)
             msls.append(msl)
             quivs.append(quiv)
             lengths.append((quiv[0] ** 2 + quiv[1] ** 2) ** .5)
@@ -468,35 +485,40 @@ class Eumetsat:
                 lead.append(leads.Lead(date).lead_data*100)
                 path = 'lead'
 
+        count = 0
         for i in range(int(len(dates) / self.ncols)):
             fig, axs = self.setup_plot()
             begin, end = i * self.prod, i * self.prod + self.prod + 1
 
-            for j, (ax, l, msl) in enumerate(zip(axs[0], lead[begin: end], msls[begin: end])):
-                print(dates[self.prod * i + j])
-                cim = ax.contour(m_lon, m_lat, msl, transform=ccrs.PlateCarree(), cmap='Oranges_r', levels=10)
-                im = ax.pcolormesh(lon, lat, l, transform=ccrs.PlateCarree(), cmap='cool', vmin=0, vmax=100)
-                ax.clabel(cim, inline=True, fontsize=15, inline_spacing=10)
-                ax.set_title(f'{dscience.string_time_to_datetime(dates[self.prod * i + j])}', fontsize=20)
-            cbar = fig.colorbar(im, ax=axs[0])
+            for j, (ax1, ax2) in enumerate(zip(axs[0], axs[1])):
+                print(dates[count])
+                cim = ax1.contour(m_lon, m_lat, msls[count], transform=ccrs.PlateCarree(), cmap='Oranges_r', levels=10)
+                lim = ax1.pcolormesh(lon, lat, lead[count], transform=ccrs.PlateCarree(), cmap='cool', vmin=0, vmax=100)
+                ax1.clabel(cim, inline=True, fontsize=15, inline_spacing=10)
+                ax1.set_title(f'{dscience.string_time_to_datetime(dates[count])}', fontsize=20)
+
+                qim = ax2.quiver(self.xc, self.yc, quivs[count][0][::self.skip, ::self.skip] * factor,
+                                quivs[count][1][::self.skip, ::self.skip] * factor,
+                                lengths[count][::self.skip, ::self.skip] * factor, scale=500,
+                                clim=(0, q_cap * factor), transform=ccrs.NorthPolarStereo(-45), cmap='coolwarm',
+                                )  # width=.008, scale=5
+                count += 1
+
+            cbar = fig.colorbar(lim, ax=axs[0])
             cbar.set_label(f'{path} fraction in %', size=18)
             cbar.ax.tick_params(labelsize=15)
 
-            for j, (ax, quiv, length) in enumerate(zip(axs[1], quivs[i * 6:i * 6 + 7], lengths[i * 6:i * 6 + 7])):
-                im = ax.quiver(self.xc, self.yc, quiv[0] * factor, quiv[1] * factor, length * factor, scale=5,
-                               clim=(0, q_cap * factor), transform=ccrs.NorthPolarStereo(-45), cmap='coolwarm',
-                               width=.008)
-            cbar = fig.colorbar(im, ax=axs[1])
-            cbar.set_label(r'ice drift in m/s', size=18)
+            cbar = fig.colorbar(qim, ax=axs[1])
+            cbar.set_label(r'ice drift in cm/s', size=18)
             cbar.ax.tick_params(labelsize=15)
 
-            plot.show_plot(fig, f'./plots/ice divergence/{self.file}/drift_{path}_'
+            plot.show_plot(fig, f'./plots/ice divergence/{self.file}/drift lead/drift_{path}_'
                                 f'{dates[begin]}_{dates[begin + self.prod - 1]}.png', False)
 
 
 if __name__ == '__main__':
     # all plots related to ice drift Barent Sea
-    all_dates = dscience.time_delta('20200210', '20200228')
+    all_dates = dscience.time_delta('20200102', '20200429')
     # Eumetsat(ci.barent_extent).plot_drift_leads(all_dates, True)
     # Eumetsat(ci.barent_extent).plot_drift_leads(all_dates, False)
     # Eumetsat(ci.barent_extent).plot_drift_div(all_dates)
@@ -506,9 +528,14 @@ if __name__ == '__main__':
 
     # all plots related to ice drift entire Arctic
     # Eumetsat(ci.arctic_extent).plot_drift_leads(all_dates, True)
-    # Eumetsat(ci.arctic_extent).plot_drift_leads(all_dates, False)
+    Eumetsat(ci.arctic_extent).plot_drift_leads(all_dates, False)
     # Eumetsat(ci.arctic_extent).plot_drift_div(all_dates)
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, True)
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, False)
     # Eumetsat(ci.arctic_extent).plot_drift_vort(all_dates)
+
+    arr = np.random.randint(0, 10, (10, 10))
+    print(arr)
+    print()
+    print(arr[::2, ::2])
     pass
