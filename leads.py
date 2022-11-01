@@ -204,7 +204,6 @@ class Era5Regrid:
 
         self.var = variable
         path = variable_dict[self.var]
-        #self.lead = lead
 
         data_set = nc.Dataset(path)
         self.shape = Lead('20200101').old_shape
@@ -218,10 +217,28 @@ class Era5Regrid:
         else:
             self.variable = data_set.variables[self.var]
 
-        #self.lon = ds.clear_matrix(self.lon, lead.del_row, lead.del_col)
-        #self.lat = ds.clear_matrix(self.lat, lead.del_row, lead.del_col)
-
     def get_variable(self, date):
+        dt_date = ds.string_time_to_datetime(date)
+        print(dt_date)
+        if dt_date.year == 2019:
+            variable_dict = {'msl': 'data/ERA5_METAw_remapbil.nc', 'wind': 'data/ERA5_METAw_remapbil.nc',
+                             't2m': 'data/ERA5_METAw_remapbil.nc', 'siconc': 'data/ERA5_METAw_remapbil.nc',
+                             'cyclone_occurence': 'data/ERA5_METAw_remapbil.nc',
+                             'wind_quiver': 'data/ERA5_METAw_remapbil.nc'}
+            path = variable_dict[self.var]
+
+            data_set = nc.Dataset(path)
+            self.shape = Lead('20200101').old_shape
+            self.time = data_set['time']
+            self.lon = np.reshape(data_set.variables['lon'], self.shape)
+            self.lat = np.reshape(data_set.variables['lat'], self.shape)
+
+            if self.var == 'wind_quiver':
+                self.u10 = data_set.variables['u10']
+                self.v10 = data_set.variables['v10']
+            else:
+                self.variable = data_set.variables[self.var]
+
         d1 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 0, 0, 0, 0)
         d2 = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 18, 0, 0, 0)
         t1, t2 = cftime.date2index([d1, d2], self.time)
@@ -230,7 +247,6 @@ class Era5Regrid:
         mean_variable = np.zeros(new_shape)
         for t in range(t1, t2 + 1):
             add_msl = np.reshape(self.variable[t], self.shape)
-            #add_msl = ds.clear_matrix(add_msl, self.lead.del_row, self.lead.del_col)
             mean_variable = np.add(mean_variable, add_msl)
         return ds.variable_manip(self.var, .25 * mean_variable)
 

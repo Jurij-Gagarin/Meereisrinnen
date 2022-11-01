@@ -196,6 +196,21 @@ class Analysis:
         plt.tight_layout()
         plt.savefig(f'./plots/analysis/compare_deltad_{self.dates[0]}_{self.dates[-1]}')
 
+    def compare_deltadays_graph(self):
+        fig, ax = plt.subplots()
+        ax.set_xlabel('days prior')
+        ax.set_ylabel('mean difference to days prior = 0')
+        for i in range(0, 7):
+            print(i)
+            self.leads, self.cycs, self.cycs_past = [], [], []
+            self.delta_days = i
+            no_cyc, cyc, cyc_prior, no_cyc_prior = self.cluster_leads()
+
+            diff = cyc_prior - no_cyc_prior - (cyc - no_cyc)
+            ax.scatter(i, np.nanmean(diff), c='steelblue')
+
+        plt.tight_layout()
+        plt.savefig(f'./plots/analysis/compare_deltad_graph_{self.dates[0]}_{self.dates[-1]}')
 
     def plot_average_cyc_lead(self):
         self.collect_leads_cycs()
@@ -250,12 +265,10 @@ class Analysis:
             f'./plots/analysis/ndata_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
 
-
 if __name__ == '__main__':
     # A = Analysis('20200217', '20200224')
-    A = Analysis('20200110', '20200430')
-    # A = Analysis('20200301', '20200301')
-    for i in range(1, 6):
-        A.delta_days = i
-        A.plot_ndata()
+    # A = Analysis('20200110', '20200430')
+    A = Analysis('20191110', '20200430')
+
+    A.compare_deltadays_graph()
 
