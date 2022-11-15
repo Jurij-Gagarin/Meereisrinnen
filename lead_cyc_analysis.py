@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import data_science as ds
 import cartopy.crs as ccrs
 from datetime import date, timedelta
+from scipy.stats import ttest_ind
+import pickle
 
 
 class Analysis:
@@ -71,14 +73,24 @@ class Analysis:
             return np.nanmean(np.array(no_cyc_leads), axis=0), np.nanmean(np.array(cyc_leads), axis=0), \
                    np.nanmean(np.array(cyc_prior_leads), axis=0), np.nanmean(np.array(no_cyc_prior_leads), axis=0)
 
+    def export_clustered_leads(self):
+        with open(f'./pickles/clustered_leads_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl', 'wb') as filehandler:
+            pickle.dump(self.cluster_leads(matrix3d=True),  filehandler)
+
     def setup_plot(self):
         fig, ax = plt.subplots(self.nrows, self.ncols,
                                subplot_kw={"projection": ccrs.NearsidePerspective(-45, 90)})
         fig.set_size_inches(32, 18)
-        for i, a in enumerate(ax.flatten()):
-            a.coastlines(resolution='50m')
-            a.set_extent(self.extent, crs=ccrs.PlateCarree())
-        return fig, ax
+        try:
+            for i, a in enumerate(ax.flatten()):
+                a.coastlines(resolution='50m')
+                a.set_extent(self.extent, crs=ccrs.PlateCarree())
+            return fig, ax
+        except AttributeError:
+            print('create fig with only one ax')
+            ax.coastlines(resolution='50m')
+            ax.set_extent(self.extent, crs=ccrs.PlateCarree())
+            return fig, ax
 
     def plot(self):
         self.nrows = 2
@@ -264,11 +276,48 @@ class Analysis:
         plt.savefig(
             f'./plots/analysis/ndata_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
+    def significance_test(self):
+        with open(f'./pickles/clustered_leads_{self.delta_days}_20191110_20200430.pkl', 'rb') as pickle_in:
+            _, _, cyc_prior, no_cyc_prior = pickle.load(pickle_in)
+
+        ttest = ttest_ind(cyc_prior, no_cyc_prior, nan_policy='omit', equal_var=False)
+        pvalues, statistics = ttest.__getattribute__('pvalue'), ttest.__getattribute__('statistic')
+        print(statistics.reshape(self.lon.shape))
+
+        self.nrows, self.ncols = 1, 2
+        fig, (ax1, ax2) = self.setup_plot()
+
+        im1 = ax1.pcolormesh(self.lon, self.lat, statistics, vmax=10, vmin=-10, transform=ccrs.PlateCarree(), cmap='bwr')
+        ax1.set_title(f'T-test', fontsize=20)
+        fig.colorbar(im1, ax=ax1)
+
+        im2 = ax2.pcolormesh(self.lon, self.lat, pvalues, vmax=1., transform=ccrs.PlateCarree(), cmap='gray')
+        ax2.set_title(f'p-values', fontsize=20)
+        fig.colorbar(im2, ax=ax2)
+
+        plt.tight_layout()
+        plt.savefig(f'./plots/analysis/significancy_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
+
+        # plot only the significant results
+        cyc_prior, no_cyc_prior = np.nanmean(np.array(cyc_prior), axis=0), np.nanmean(np.array(no_cyc_prior), axis=0)
+        diff = cyc_prior - no_cyc_prior
+        self.nrows, self.ncols = 1, 1
+        fig, ax = self.setup_plot()
+        diff[pvalues >= .1] = np.nan
+        im1 = ax.pcolormesh(self.lon, self.lat, diff, transform=ccrs.PlateCarree(), vmin=-.3, vmax=.3, cmap='bwr')
+        ax1.set_title(f'T-test', fontsize=20)
+        fig.colorbar(im1, ax=ax)
+        plt.tight_layout()
+        plt.savefig(
+            f'./plots/analysis/signif_res_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
+
+
+
 
 if __name__ == '__main__':
     # A = Analysis('20200217', '20200224')
     # A = Analysis('20200110', '20200430')
+
     A = Analysis('20191110', '20200430')
-
-    A.compare_deltadays_graph()
-
+    A.delta_days = 3
+    A.significance_test()
