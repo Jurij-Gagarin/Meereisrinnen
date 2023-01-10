@@ -325,15 +325,74 @@ class Analysis:
         plt.savefig(
             f'./plots/analysis/signif_res_{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
-    def difference_time_window(self):
-        with open(f'./pickles/clustered_leads_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl', 'rb') as pickle_in:
+    def difference_time_window_sig(self):
+        with open(f'./pickles/clustered_leads_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl',
+                  'rb') as pickle_in:
             _, _, cyc_prior, no_cyc_prior = pickle.load(pickle_in)
 
+        regime_shift_ind = int(cyc_prior.shape[0] / 2)
+
+        for mat, title in zip([cyc_prior, no_cyc_prior], ['cyc', 'no_cyc']):
+            ttest = ttest_ind(mat[:regime_shift_ind], mat[regime_shift_ind:], nan_policy='omit', equal_var=False)
+            pvalues, statistics = ttest.__getattribute__('pvalue'), ttest.__getattribute__('statistic')
+            print(statistics.reshape(self.lon.shape))
+
+            self.nrows, self.ncols = 1, 2
+            fig, (ax1, ax2) = self.setup_plot()
+
+            im1 = ax1.pcolormesh(self.lon, self.lat, statistics, vmax=10, vmin=-10, transform=ccrs.PlateCarree(),
+                                 cmap='coolwarm')
+            ax1.set_title(f'T-test', fontsize=20)
+            fig.colorbar(im1, ax=ax1)
+
+            im2 = ax2.pcolormesh(self.lon, self.lat, pvalues, vmax=1., transform=ccrs.PlateCarree(), cmap='gray')
+            ax2.set_title(f'p-values', fontsize=20)
+            fig.colorbar(im2, ax=ax2)
+
+            plt.tight_layout()
+            plt.savefig(
+                f'./plots/analysis/timesplit_{title}_{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
+
+            # plot only the significant results
+            diff1, diff2 = np.nanmean(np.array(mat[:regime_shift_ind]), axis=0), np.nanmean(np.array(mat[regime_shift_ind:]), axis=0)
+            diff = diff2 - diff1
+            self.nrows, self.ncols = 1, 1
+            fig, ax = self.setup_plot()
+            diff[pvalues >= .1] = np.nan
+            im1 = ax.pcolormesh(self.lon, self.lat, diff, transform=ccrs.PlateCarree(), vmin=-.1, vmax=.1, cmap='coolwarm')
+            ax1.set_title(f'T-test', fontsize=20)
+            fig.colorbar(im1, ax=ax)
+            plt.tight_layout()
+            plt.savefig(
+                f'./plots/analysis/timesplit_diff_{title}_{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
+
+    def difference_time_window(self):
+        with open(f'./pickles/clustered_leads_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl',
+                  'rb') as pickle_in:
+            _, _, cyc_prior, no_cyc_prior = pickle.load(pickle_in)
+
+        regime_shift_ind = int(cyc_prior.shape[0] / 2)
+        cyc_prior1, cyc_prior2 = np.nanmean(cyc_prior[:regime_shift_ind], axis=0), np.nanmean(cyc_prior[regime_shift_ind:], axis=0)
+        no_cyc_prior1, no_cyc_prior2 = np.nanmean(no_cyc_prior[:regime_shift_ind], axis=0), np.nanmean(no_cyc_prior[regime_shift_ind:], axis=0)
+
+        diff_cyc = cyc_prior2 - cyc_prior1
+        diff_no_cyc = no_cyc_prior2 - no_cyc_prior1
+
+        print(diff_cyc.shape)
+
+        self.nrows, self.ncols = 1, 2
+        fig, (ax1, ax2) = self.setup_plot()
+        ax1.pcolormesh(self.lon, self.lat, diff_cyc, transform=ccrs.PlateCarree(), vmin=-.1, vmax=.1, cmap='coolwarm')
+        ax2.pcolormesh(self.lon, self.lat, diff_no_cyc, transform=ccrs.PlateCarree(), vmin=-.1, vmax=.1, cmap='coolwarm')
+        plt.tight_layout()
+        plt.savefig(
+            f'./plots/analysis/timesplit_diff_{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
 
 if __name__ == '__main__':
     # A = Analysis('20200217', '20200224')
     A = Analysis('20021105', '20190430')
+    A.plot_average_cyc_lead()
     # A = Analysis('20191105', '20191130')
     # A = Analysis('20030101', '20030131')
 
@@ -341,7 +400,8 @@ if __name__ == '__main__':
     # A.plot_clustered_leads(True)
     # A.plot()
     # A.export_clustered_leads(True)
-    A.significance_test()
+    # A.significance_test()
+    # A.difference_time_window()
 
 
     '''for i in range(0, 9):

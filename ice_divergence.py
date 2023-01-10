@@ -144,7 +144,7 @@ class Eumetsat:
         cols = {ci.barent_extent: 6, ci.arctic_extent: 4}
         file_dict = {ci.barent_extent: 'Barent Sea', ci.arctic_extent: 'Arctic'}
 
-        self.dir = './data/ice drift/Eumetsat'
+        self.dir = './data/ice drift/Eumetsat/2010-2022/'
         self.path_list = os.listdir(self.dir)
         self.data_sets = {}
         self.extent = extent
@@ -158,7 +158,10 @@ class Eumetsat:
         self.ds_drift = nc.Dataset('./data/drift_combined.nc')
 
         for path in self.path_list:
-            ds = nc.Dataset(self.dir + '/' + path)
+            if path == '.DS_Store':
+                break
+
+            ds = nc.Dataset(self.dir + path)
             date = (datetime.datetime(1978, 1, 1, 0, 0, 0) + datetime.timedelta(seconds=int(ds['time'][0]))).date()
             self.data_sets[date] = ds
 
@@ -179,6 +182,10 @@ class Eumetsat:
         dX = ds['dX'][0, :]
         dX[dX.mask] = np.nan
         dX[self.lonlat_mask] = np.nan
+
+        # correct dY for different axis
+        if ds.product_version < 1.4:
+            dY = -dY
         return dX, dY
 
     def get_drift(self, date):
@@ -516,9 +523,91 @@ class Eumetsat:
                                 f'{dates[begin]}_{dates[begin + self.prod - 1]}.png', False)
 
 
+class GeneralEumetsat:
+    def __init__(self, date, extent=ci.arctic_extent):
+        self.extent = extent
+        dt_date = dscience.string_time_to_datetime(date)
+        dt_date_p2 = dt_date + datetime.timedelta(days=2)
+        date_p2 = dscience.datetime_to_string(dt_date_p2)
+
+        self.path = './data/ice drift/Eumetsat/2010-2022/'
+        self.path = self.path + f'ice_drift_nh_polstere-625_multi-oi_{date}1200-{date_p2}1200.nc'
+
+        ds = nc.Dataset(self.path)
+        print(ds['yc'][:])
+        print(ds.product_version)
+
+
+
+def divergence(f, sp):
+    """ Computes divergence of vector field
+    f: array -> vector field components [Fx,Fy,Fz,...]
+    sp: array -> spacing between points in respecitve directions [spx, spy,spz,...]
+    """
+    num_dims = len(f)
+    return np.ufunc.reduce(np.add, [np.gradient(f[i], sp[i], axis=i) for i in range(num_dims)])
+
+
+def divergence_test():
+    # Number of points (NxN)
+    N = 51
+    # Boundaries
+    ymin = -2.
+    ymax = 2.
+    xmin = -2.
+    xmax = 2.
+
+    # Create Meshgrid
+    x = np.linspace(xmin, xmax, N)
+    y = np.linspace(ymin, ymax, N)
+    x, y = np.flip(x), np.flip(y)
+    xx, yy = np.meshgrid(x, y)
+
+    print(xx)
+    print()
+    print(yy)
+
+    xx, yy = np.meshgrid(x, y, indexing='ij')
+    print()
+    print(xx)
+    print()
+    print(yy)
+
+    Fx = np.cos(xx + 2 * yy)
+    Fy = np.sin(xx - 2 * yy)
+    F = np.array([Fx, Fy])
+
+    # Analytic computation of the divergence (EXACT)
+    div_analy = -np.sin(xx + 2 * yy) - 2 * np.cos(xx - 2 * yy)
+
+    # Compute Divergence
+    points = [x, y]
+    sp = [np.diff(p)[0] for p in points]
+    div_num = divergence(F, sp)
+
+    # PLOT
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 10))
+    im1 = ax1.pcolormesh(xx, yy, div_analy, cmap="jet")
+    fig.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
+    ax1.set_title('analytical solution')
+
+    im2 = ax2.pcolormesh(xx, yy, div_num, cmap="jet")
+    fig.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
+    ax2.set_title('numerical solution')
+
+    n_skip = 5
+    skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+    ax2.quiver(xx[skip], yy[skip], Fx[skip], Fy[skip])
+    ax1.quiver(xx[skip], yy[skip], Fx[skip], Fy[skip])
+    ax1.set_aspect('equal')
+    ax2.set_aspect('equal')
+    plt.tight_layout()
+    plt.savefig('divergence_test.png', bbox_inches='tight', dpi=200)
+
+
 if __name__ == '__main__':
     # all plots related to ice drift Barent Sea
-    all_dates = dscience.time_delta('20200102', '20200429')
+    # all_dates = dscience.time_delta('20200102', '20200429')
     # Eumetsat(ci.barent_extent).plot_drift_leads(all_dates, True)
     # Eumetsat(ci.barent_extent).plot_drift_leads(all_dates, False)
     # Eumetsat(ci.barent_extent).plot_drift_div(all_dates)
@@ -528,14 +617,20 @@ if __name__ == '__main__':
 
     # all plots related to ice drift entire Arctic
     # Eumetsat(ci.arctic_extent).plot_drift_leads(all_dates, True)
-    Eumetsat(ci.arctic_extent).plot_drift_leads(all_dates, False)
+    # Eumetsat(ci.arctic_extent).plot_drift_leads(all_dates, False)
     # Eumetsat(ci.arctic_extent).plot_drift_div(all_dates)
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, True)
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, False)
-    # Eumetsat(ci.arctic_extent).plot_drift_vort(all_dates)
 
-    arr = np.random.randint(0, 10, (10, 10))
-    print(arr)
-    print()
-    print(arr[::2, ::2])
+    #GeneralEumetsat('20100228')
+    #GeneralEumetsat('20200228')
+
+    # divergence_test()
+
+
+
+
+
+
+
     pass
