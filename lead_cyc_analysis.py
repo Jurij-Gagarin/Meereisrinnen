@@ -8,7 +8,6 @@ from datetime import date, timedelta
 from scipy.stats import ttest_ind
 import pickle
 
-
 class Analysis:
     def __init__(self, date1, date2, extent=ci.arctic_extent):
         self.nrows = 2
@@ -389,10 +388,75 @@ class Analysis:
             f'./plots/analysis/timesplit_diff_{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
 
+def multy_year_average_lead_cyc(mean='day', plot=True):
+    dates = ds.time_delta('20021101', '20191231')
+    dt_dates = ds.string_time_to_datetime(dates)
+    lead_data, cyc_data, time = [], [], []
+
+    for date in dates:
+        ds_obj = leads.LeadAllY(date)
+        lead_data.append(ds_obj.lead_data)
+        cyc_data.append(ds_obj.cyc_data)
+        print(date)
+
+    cyc_data, lead_data = np.array(cyc_data), np.array(lead_data)
+    print(lead_data, lead_data.shape)
+    if mean == 'day':
+        mean_cyc = []
+        mean_lead = []
+
+        for lead, cyc in zip(lead_data, cyc_data):
+            mean_cyc.append(np.nanmean(cyc))
+            mean_lead.append(np.nanmean(lead))
+
+        time = dt_dates
+
+    elif mean == 'month':
+        mean_cyc, current_cyc = [], []
+        mean_lead, current_lead = [], []
+        prev_month = dt_dates[0].month
+
+        for lead, cyc, date in zip(lead_data, cyc_data, dt_dates):
+            month = date.month
+
+            if month == prev_month:
+                current_cyc.append(cyc)
+                current_lead.append(lead)
+            else:
+                mean_cyc.append(np.nanmean(current_cyc))
+                mean_lead.append(np.nanmean(current_lead))
+                time.append(f'{date.year - 2000}/{date.month}')
+
+                current_cyc, current_lead = [], []
+
+            prev_month = month
+
+    if plot:
+        # mean_lead, mean_cyc, time = multy_year_average_lead_cyc(mean='month')
+        fig, (ax1, ax2) = plt.subplots(2)
+        ax1.scatter(time, mean_lead, label='lead', c='orange')
+        ax2.scatter(time, mean_cyc, label='cyc')
+        ax1.legend()
+        ax2.legend()
+        fig.autofmt_xdate()
+
+        skip = 6
+        ax2.set_xticks(time[::skip])
+        ax2.set_xticklabels(time[::skip], rotation=45)
+        ax1.set_xticks(time[::skip])
+        ax1.set_xticklabels(time[::skip], rotation=45)
+        ax1.set_title('monthly mean of lead fraction/cyc occurence over time')
+        # plt.show()
+        fig.tight_layout()
+        plt.savefig('./mean_monthly_lead_cyc.png')
+
+    return mean_lead, mean_cyc, time
+
+
 if __name__ == '__main__':
     # A = Analysis('20200217', '20200224')
-    A = Analysis('20021105', '20190430')
-    A.plot_average_cyc_lead()
+    # A = Analysis('20021105', '20190430')
+    # A.plot_average_cyc_lead()
     # A = Analysis('20191105', '20191130')
     # A = Analysis('20030101', '20030131')
 
@@ -403,8 +467,10 @@ if __name__ == '__main__':
     # A.significance_test()
     # A.difference_time_window()
 
-
     '''for i in range(0, 9):
         A = Analysis(f'201{i}1105', f'201{i+1}0430')
         A.plot_clustered_leads()
-'''
+    '''
+
+    pass
+

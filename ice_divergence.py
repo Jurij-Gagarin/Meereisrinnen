@@ -526,17 +526,66 @@ class Eumetsat:
 class GeneralEumetsat:
     def __init__(self, date, extent=ci.arctic_extent):
         self.extent = extent
+        self.nrows, self.ncols = 1, 2
+        # load data set for given day
         dt_date = dscience.string_time_to_datetime(date)
         dt_date_p2 = dt_date + datetime.timedelta(days=2)
         date_p2 = dscience.datetime_to_string(dt_date_p2)
-
         self.path = './data/ice drift/Eumetsat/2010-2022/'
         self.path = self.path + f'ice_drift_nh_polstere-625_multi-oi_{date}1200-{date_p2}1200.nc'
-
         ds = nc.Dataset(self.path)
-        print(ds['yc'][:])
-        print(ds.product_version)
 
+        # get displacement
+        self.dX = ds['dX'][0, :] * 1000
+        self.dY = ds['dY'][0, :] * 1000
+        self.dY[self.dY.mask] = np.nan
+        self.dX[self.dX.mask] = np.nan
+        if float(ds.product_version) < 1.4:
+            self.dY = -self.dY
+
+        # calculate drift speed from displacement
+        dt = 172800
+        self.u = self.dX / dt
+        self.v = self.dY / dt
+
+        # get coords
+        self.xc = ds['xc'][:] * 1000
+        self.yc = ds['yc'][:] * 1000
+        self.xx, self.yy = np.meshgrid(self.xc, self.yc, indexing='xy')
+        print(self.xx)
+        print()
+        print(self.yy)
+
+    def setup_plot(self):
+        # create figure and base map
+        fig, ax = plt.subplots(self.nrows, self.ncols,
+                               subplot_kw={"projection": ccrs.NorthPolarStereo(-45)}, constrained_layout=True)
+        fig.set_size_inches(32, 18)
+        for i, a in enumerate(ax.flatten()):
+            a.coastlines(resolution='50m')
+            a.set_extent(self.extent, crs=ccrs.PlateCarree())
+        return fig, ax
+
+    def calculate_divergence(self):
+        points = [self.xc, self.yc]
+        # calculate spatial difference in the grid. This should always be 62.5km
+        sp = [np.diff(p)[0] for p in points]
+        return divergence(np.array([self.u, self.v]), sp)
+
+    def plot_divergence(self):
+        fig, (ax1, ax2) = self.setup_plot()
+        n_skip = None
+        skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+
+        im2 = ax2.pcolormesh(self.xx, self.yy, self.calculate_divergence(), cmap='coolwarm', vmin=-2.e-6, vmax=2.e-6,
+                             transform=ccrs.NorthPolarStereo(-45))
+        fig.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
+        print(self.xx.shape, self.yy.shape, self.u.shape, self.v.shape)
+        dist = np.sqrt(self.u ** 2 + self.v ** 2)
+        im1 = ax1.quiver(self.xx[skip], self.yy[skip], self.u[skip], self.v[skip], dist[skip], cmap='coolwarm',
+                         transform=ccrs.NorthPolarStereo(-45))
+        fig.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
+        plt.show()
 
 
 def divergence(f, sp):
@@ -622,10 +671,10 @@ if __name__ == '__main__':
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, True)
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, False)
 
-    #GeneralEumetsat('20100228')
-    #GeneralEumetsat('20200228')
+    GeneralEumetsat('20100101').plot_divergence()
+    GeneralEumetsat('20200228').calculate_divergence()
 
-    # divergence_test()
+    #divergence_test()
 
 
 
