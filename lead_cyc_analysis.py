@@ -7,20 +7,27 @@ import cartopy.crs as ccrs
 from datetime import date, timedelta
 from scipy.stats import ttest_ind
 import pickle
+import ice_divergence as ice_div
 
 class Analysis:
-    def __init__(self, date1, date2, extent=ci.arctic_extent):
+    def __init__(self, date1, date2, extent=ci.arctic_extent, collect_ice_div=True):
         self.nrows = 2
         self.ncols = 4
         self.extent = extent
         self.dates = ds.time_delta(date1, date2)
-        self.leads, self.cycs, self.cycs_past = [], [], []
+        self.leads, self.cycs, self.cycs_past, self.div = [], [], [], []
         self.lon, self.lat = leads.CoordinateGridAllY().lon, leads.CoordinateGridAllY().lat
         self.delta_days = 3
         self.sic_filter = 95.
 
-    def collect_leads_cycs(self):
-        print(self.dates)
+        self.collect_ice_div = collect_ice_div
+        self.missing_dates = []
+        if self.collect_ice_div:
+            DivClass = ice_div.GeneralEumetsat(date1)
+            self.xx, self.yy = DivClass.xx, DivClass.yy
+
+    def collect_leads_cycs(self, return_for_export=False):
+        # print(self.dates)
         for date in self.dates:
             print(date)
             # load class
@@ -49,6 +56,23 @@ class Analysis:
 
             self.cycs.append(cyc)
             self.cycs_past.append(cyc_past)
+
+            if self.collect_ice_div:
+                # load ice divergence data and coords
+                try:
+                    DivClass = ice_div.GeneralEumetsat(date)
+                    self.div.append(DivClass.calculate_divergence())
+                except FileNotFoundError:
+                    print('Could not find date: ', date)
+                    print('Ice div and leads are now arrays of different length. Means can still be compared but \n'
+                          'element wise assertion is now wrong.')
+                    self.missing_dates.append(date)
+
+        if self.missing_dates:
+            print('missing dates: ', self.missing_dates)
+
+        if return_for_export:
+            return self.leads, self.cycs
 
     def cluster_leads(self, matrix3d=False):
         # get average lead fraction for all time instances with cyclone (today and/or yesterday), without cyclone
@@ -81,6 +105,10 @@ class Analysis:
                 pickle.dump(self.cluster_leads(matrix3d=True),  filehandler)
             else:
                 pickle.dump(self.cluster_leads(matrix3d=False),  filehandler)
+
+    def export_collection(self):
+        with open(f'./pickles/collections_{self.sic_filter}_{self.dates[0]}_{self.dates[-1]}.pkl', 'wb') as filehandler:
+            pickle.dump(self.collect_leads_cycs(return_for_export=True),  filehandler)
 
     def setup_plot(self):
         fig, ax = plt.subplots(self.nrows, self.ncols,
@@ -192,6 +220,40 @@ class Analysis:
 
         plt.tight_layout()
         plt.savefig(f'./plots/analysis/deep time/clustered_leads_sicfilter{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
+
+    def plot_clustered_leads_div(self, from_pickle=False):
+        self.nrows, self.ncols = 1, 3
+        if from_pickle:
+            with open(
+                    f'./pickles/clustered_leads_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl',
+                    'rb') as pickle_in:
+                no_cyc, cyc, cyc_prior, no_cyc_prior = pickle.load(pickle_in)
+                print(no_cyc.shape)
+                no_cyc, cyc = np.nanmean(no_cyc, axis=0), np.nanmean(cyc, axis=0)
+                cyc_prior, no_cyc_prior = np.nanmean(cyc_prior, axis=0), np.nanmean(no_cyc_prior, axis=0)
+        else:
+            no_cyc, cyc, cyc_prior, no_cyc_prior = self.cluster_leads()
+
+        fig, (ax1, ax2, ax3) = self.setup_plot()
+
+        im1 = ax1.pcolormesh(self.xx, self.yy, np.nanmean(self.div, axis=0), vmin=-6.e-07, vmax=6.e-07,
+                             transform=ccrs.NorthPolarStereo(-45), cmap='bwr')
+        ax1.set_title('ice divergence', fontsize=20)
+        fig.colorbar(im1, ax=ax1, orientation='vertical', fraction=0.046, pad=0.04)
+
+        im2 = ax2.pcolormesh(self.lon, self.lat, np.ones(shape=self.lat.shape), transform=ccrs.PlateCarree())
+        ax2.set_title(f'wind divergence (not finished)', fontsize=20)
+        fig.colorbar(im2, ax=ax2, orientation='vertical', fraction=0.046, pad=0.04)
+
+        im3 = ax3.pcolormesh(self.lon, self.lat, cyc_prior - no_cyc_prior, vmin=-.1, vmax=.1,
+                             transform=ccrs.PlateCarree(), cmap='bwr')
+        fig.colorbar(im3, ax=ax3, orientation='vertical', fraction=0.046, pad=0.04)
+        ax3.set_title(f'cyc prior - no cyc prior', fontsize=20)
+
+
+        plt.tight_layout()
+        plt.savefig(
+            f'./plots/analysis/deep time/clustered_leads_div_sicfilter{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
     def compare_deltadays(self):
         img, diff = [], []
@@ -387,9 +449,41 @@ class Analysis:
         plt.savefig(
             f'./plots/analysis/timesplit_diff_{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
+    def climatology(self):
+        # collect data
+        try:
+            with open(f'./pickles/collections_{self.sic_filter}_{self.dates[0]}_{self.dates[-1]}.pkl', 'rb') as pickle_in:
+                print('Try to import collection')
+                self.leads, self.cycs = pickle.load(pickle_in)
+                print('done')
+        except FileNotFoundError:
+            print('could not find collection \n try to create collection and restart')
+            self.export_collection()
+            print('done')
+            self.climatology()
+            return 'Finished with exception'
 
-def multy_year_average_lead_cyc(mean='day', plot=True):
-    dates = ds.time_delta('20021101', '20191231')
+        # transform to numpy array
+        self.leads, self.cycs = np.array(self.leads), np.array(self.cycs)
+        N, M = 100, 150
+        lon, lat = round(self.lon[N, M]), round(self.lat[N, M])
+
+        fig, axs = plt.subplots(4, 1, figsize=(15, 7))
+
+        for ax in axs.flatten():
+            N, M = np.random.randint(100, 200), np.random.randint(100, 200)
+            lon, lat = round(self.lon[N, M]), round(self.lat[N, M])
+
+            ax.set_title(f'lon: {lon}, lat: {lat}')
+            n_Time = 175
+            ax.bar(ds.string_time_to_datetime(self.dates)[:n_Time], self.leads[:n_Time, N, M])
+
+        plt.tight_layout()
+        plt.savefig('climatology_test2.png')
+
+
+def multi_year_average_lead_cyc(mean='day', plot=True):
+    dates = ds.time_delta('20021101', '20151231')
     dt_dates = ds.string_time_to_datetime(dates)
     lead_data, cyc_data, time = [], [], []
 
@@ -397,11 +491,10 @@ def multy_year_average_lead_cyc(mean='day', plot=True):
         ds_obj = leads.LeadAllY(date)
         lead_data.append(ds_obj.lead_data)
         cyc_data.append(ds_obj.cyc_data)
-        print(date)
 
     cyc_data, lead_data = np.array(cyc_data), np.array(lead_data)
-    print(lead_data, lead_data.shape)
     if mean == 'day':
+        print('h')
         mean_cyc = []
         mean_lead = []
 
@@ -434,8 +527,8 @@ def multy_year_average_lead_cyc(mean='day', plot=True):
     if plot:
         # mean_lead, mean_cyc, time = multy_year_average_lead_cyc(mean='month')
         fig, (ax1, ax2) = plt.subplots(2)
-        ax1.scatter(time, mean_lead, label='lead', c='orange')
-        ax2.scatter(time, mean_cyc, label='cyc')
+        ax1.scatter(time, mean_lead, label='lead', c='orange', alpha=.1)
+        ax2.scatter(time, mean_cyc, label='cyc', alpha=.1)
         ax1.legend()
         ax2.legend()
         fig.autofmt_xdate()
@@ -448,17 +541,22 @@ def multy_year_average_lead_cyc(mean='day', plot=True):
         ax1.set_title('monthly mean of lead fraction/cyc occurence over time')
         # plt.show()
         fig.tight_layout()
-        plt.savefig('./mean_monthly_lead_cyc.png')
+        plt.savefig(f'./mean_{mean}_lead_cyc.png')
+        print('done')
 
     return mean_lead, mean_cyc, time
 
 
 if __name__ == '__main__':
     # A = Analysis('20200217', '20200224')
-    # A = Analysis('20021105', '20190430')
+    print(round(79.01212984, 2))
+    A = Analysis('20021105', '20190430', collect_ice_div=False)
     # A.plot_average_cyc_lead()
     # A = Analysis('20191105', '20191130')
     # A = Analysis('20030101', '20030131')
+    # A = Analysis('20100101', '20100228')
+    # A.plot_clustered_leads_div()
+    A.climatology()
 
     # A.delta_days = 3
     # A.plot_clustered_leads(True)
@@ -471,6 +569,7 @@ if __name__ == '__main__':
         A = Analysis(f'201{i}1105', f'201{i+1}0430')
         A.plot_clustered_leads()
     '''
+    # multi_year_average_lead_cyc(mean='day')
 
     pass
 
