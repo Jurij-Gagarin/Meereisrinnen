@@ -554,6 +554,8 @@ class GeneralEumetsat:
         self.xc = ds['xc'][:] * 1000
         self.yc = ds['yc'][:] * 1000
         self.xx, self.yy = np.meshgrid(self.xc, self.yc, indexing='ij')
+        # plt.imshow(self.yy)
+        # plt.show()
 
         # get lead/cyc data and coords
         # print(date, date_p1)
@@ -578,6 +580,7 @@ class GeneralEumetsat:
         points = [self.xc, self.yc]
         # calculate spatial difference in the grid. This should always be 62.5km
         sp = [np.diff(p)[0] for p in points]
+        print(sp)
         return divergence(np.array([self.u, self.v]), sp)
 
     def plot_divergence(self):
@@ -676,11 +679,13 @@ if __name__ == '__main__':
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, True)
     # Eumetsat(ci.arctic_extent).plot_div_leads(all_dates, False)
 
-    dates = dscience.time_delta('20180201', '20180228')
+    '''dates = dscience.time_delta('20180201', '20180228')
 
     for date in dates:
         print(date)
-        GeneralEumetsat(date).plot_divergence()
+        GeneralEumetsat(date).plot_divergence()'''
+
+    GeneralEumetsat('20180201').calculate_divergence()
     # GeneralEumetsat('20200228').calculate_divergence()
 
     # divergence_test()

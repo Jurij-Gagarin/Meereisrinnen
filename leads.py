@@ -267,16 +267,28 @@ class Era5Regrid:
 
 
 class LeadAllY:
-    def __init__(self, date):
+    def __init__(self, date, path=None):
         # import lead fraction data
         self.date = date[:4] + '_' + date[4:]
         dt_date = ds.string_time_to_datetime(date)
+        dt_datem1, dt_datep1 = dt_date - datetime.timedelta(days=1), dt_date + datetime.timedelta(days=1)
+        datem1, datep1 = ds.datetime_to_string(dt_datem1), ds.datetime_to_string(dt_datep1)
         path_lead = f'./data/DailyArcticLeadFraction_12p5km_Rheinlaender/data/LeadFraction_12p5km_{self.date}.nc'
         path_cyc = f'./data/CO_2000_2019_remapbil.nc'
         path_sic = f'./data/ERA5_SIC_2000_2019_remapbil.nc'
+        path_drift = f'./data/ice drift/Eumetsat/2010-2022-remapbil/'
+        path_drift += f'remapbil_ice_drift_nh_polstere-625_multi-oi_{datem1}1200-{datep1}1200.nc'
         ds_lead = nc.Dataset(path_lead)
         ds_cyc = nc.Dataset(path_cyc)
+        print(ds_cyc)
         ds_sic = nc.Dataset(path_sic)
+
+        if path:
+            path_drift = path
+        try:
+            ds_drift = nc.Dataset(path_drift)
+        except FileNotFoundError:
+            ds_drift = None
 
         dt_date = datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:]), 9, 0, 0)
         d = cftime.date2index(dt_date, ds_cyc['time'])
@@ -289,23 +301,53 @@ class LeadAllY:
         self.sic_data = ds_sic['siconc'][d_sic]
         self.sic_data = self.sic_data.reshape(self.lead_data.shape)
 
+        try:
+            self.u = ds_drift['dX'][:].reshape(self.lead_data.shape).T * 1000/172800
+            self.v = ds_drift['dY'][:].reshape(self.lead_data.shape).T * 1000/172800
+            self.u[self.u.mask] = np.nan
+            self.v[self.v.mask] = np.nan
+            self.ice_div = id.divergence(np.array([self.u, self.v]), [12000, -12000])
+        except ValueError:
+            print('remap failed')
+            pass
+        except TypeError:
+            print(f'failed to collect ice drift data for {self.date}')
+            self.u, self.v = np.empty(self.lead_data.shape), np.empty(self.lead_data.shape)
+            self.ice_div = np.empty(self.lead_data.shape)
+
+        '''try:
+            print('normal:')
+            self.xc = ds_drift['xc'][:] * 1000
+            self.yc = ds_drift['yc'][:] * 1000
+            self.xx, self.yy = np.meshgrid(self.xc, self.yc, indexing='ij')
+            self.u = ds_drift['dX'][0, :].T * 1000 / 172800
+            self.v = ds_drift['dY'][0, :].T * 1000 / 172800
+            self.u[self.u.mask] = np.nan
+            self.v[self.v.mask] = np.nan
+            print(self.xx.shape, self.u.shape)
+        except IndexError:
+            print('normal failed')
+            pass'''
+
 
 class CoordinateGridAllY:
     def __init__(self):
         # import corresponding coordinates
         path_grid = './data/DailyArcticLeadFraction_12p5km_Rheinlaender/LeadFraction_12p5km_LatLonGrid_subset.nc'
         ds_latlon = nc.Dataset(path_grid)
-        # print(ds_latlon)
+        # for remaped divergence this must be transposed
         self.lat = ds_latlon['lat'][:]
         self.lon = ds_latlon['lon'][:]
+        #im = plt.imshow(np.absolute(self.lon))
+        #plt.colorbar(im)
+        #print(self.lon)
+        #plt.show()
 
     def vals(self):
         # Method used to generate grid description, should not be used anymore
         print(self.lon.flatten().shape, self.lat.flatten().shape)
         np.savetxt('yvals.txt', self.lat.flatten(), delimiter=' ')
         np.savetxt('xvals.txt', self.lon.flatten(), delimiter=' ')
-
-
 
 
 def lead_avg(date1, date2):
@@ -321,47 +363,139 @@ def lead_avg_diff(date, avg):
     return np.subtract(avg, lead.lead_data)
 
 
-
 if __name__ == '__main__':
-    for date in ds.time_delta('20191201', '20191230'):
-        L2, cyc2 = LeadAllY(date).lead_data, LeadAllY(date).cyc_data
-        L1, cyc1 = Lead(date).lead_data, Era5Regrid('cyclone_occurence').get_variable(date)
 
-        L2[L2 == 1] = np.nan
-        # L1[L1 == 1] = np.nan
-
-        C1, C2 = CoordinateGrid(), CoordinateGridAllY()
-
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, subplot_kw={"projection": ccrs.NearsidePerspective(-45, 90)})
-        fig.set_size_inches(32, 18)
-        ax1.coastlines(resolution='50m')
-        ax1.set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
-        ax2.coastlines(resolution='50m')
-        ax2.set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
-        ax3.coastlines(resolution='50m')
-        ax3.set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
-        ax4.coastlines(resolution='50m')
-        ax4.set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
-
-        ax1.pcolormesh(C1.lon, C1.lat, L1, transform=ccrs.PlateCarree())
-        ax2.pcolormesh(C2.lon, C2.lat, L2, transform=ccrs.PlateCarree())
-        ax3.pcolormesh(C1.lon, C1.lat, cyc1, transform=ccrs.PlateCarree(), cmap='bwr')
-        ax4.pcolormesh(C2.lon, C2.lat, cyc2.reshape(L2.shape), transform=ccrs.PlateCarree())
-
-        plt.tight_layout()
-        plt.savefig(f'./plots/test_{date}.png')
-
-
-    #CoordinateGridAllY().vals()
-    #Lead('20200101')
+    LeadAllY('20150101')
+    CoordinateGridAllY()
 
     # print(ds.time_delta2('20021101', '20210430'))
     # LeadAllY('20201230')
     #Era5Regrid('cyclone_occurence')
 
     pass
+'''
+date = '20180105'
+    # date_p = date[:4] + '_' + date[4:]
+    dt_date = ds.string_time_to_datetime(date)
+    dt_datem1, dt_datep1 = dt_date - datetime.timedelta(days=1), dt_date + datetime.timedelta(days=1)
+    datem1, datep1 = ds.datetime_to_string(dt_datem1), ds.datetime_to_string(dt_datep1)
+    path = './data/ice drift/Eumetsat/2010-2022/'
+    path += f'ice_drift_nh_polstere-625_multi-oi_{datem1}1200-{datep1}1200.nc'
+
+    CG = CoordinateGridAllY()
+    lon, lat = CG.lon, CG.lat
+    fig, axs = plt.subplots(2, 4, subplot_kw={"projection": ccrs.NorthPolarStereo(-45)}, figsize=(15, 10))
+    axs = axs.flatten()
+
+    axs[0].coastlines(resolution='50m')
+    axs[0].set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+    axs[0].set_title('u, remaped')
+    LAY = LeadAllY(date)
+    n_skip = None
+    skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+    print(lon[skip].shape, lat[skip].shape, LAY.u[skip].shape)
+    axs[0].pcolormesh(lon[skip], lat[skip], LAY.u[skip], transform=ccrs.PlateCarree())
+
+    axs[4].coastlines(resolution='50m')
+    axs[4].set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+    axs[4].set_title('u')
+    LAY = LeadAllY(date, path)
+    n_skip = None
+    skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+    axs[4].pcolormesh(LAY.xx[skip], LAY.yy[skip], LAY.u[skip], transform=ccrs.NorthPolarStereo(-45))
+
+    axs[1].coastlines(resolution='50m')
+    axs[1].set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+    axs[1].set_title('v, remaped')
+    LAY = LeadAllY(date)
+    n_skip = None
+    skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+    axs[1].pcolormesh(lon[skip], lat[skip], LAY.v[skip], transform=ccrs.PlateCarree())
+
+    axs[5].coastlines(resolution='50m')
+    axs[5].set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+    axs[5].set_title('v')
+    LAY = LeadAllY(date, path)
+    n_skip = None
+    skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+    axs[5].pcolormesh(LAY.xx[skip], LAY.yy[skip], LAY.v[skip], transform=ccrs.NorthPolarStereo(-45))
+
+    axs[2].coastlines(resolution='50m')
+    axs[2].set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+    axs[2].set_title('quiv, remaped')
+    LAY = LeadAllY(date)
+    n_skip = 7
+    skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+    axs[2].quiver(lon[skip], lat[skip], LAY.u[skip], LAY.v[skip], transform=ccrs.PlateCarree())
+
+    axs[6].coastlines(resolution='50m')
+    axs[6].set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+    axs[6].set_title('quiv')
+    LAY = LeadAllY(date, path)
+    n_skip = 2
+    skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+    axs[6].quiver(LAY.xx[skip], LAY.yy[skip], LAY.u[skip], LAY.v[skip], transform=ccrs.NorthPolarStereo(-45))
+    # plt.savefig('test_quiver')
+
+    axs[3].coastlines(resolution='50m')
+    axs[3].set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+    axs[3].set_title('div, remaped')
+    LAY = LeadAllY(date)
+    n_skip = None
+    skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+    im = axs[3].pcolormesh(lon[skip], lat[skip], id.divergence(np.array([LAY.u, LAY.v]), [12000, -12000]),
+                           transform=ccrs.PlateCarree(), cmap='bwr', vmin=-2.e-6, vmax=2.e-6)
+    fig.colorbar(im, ax=axs[3])
+
+    axs[7].coastlines(resolution='50m')
+    axs[7].set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+    axs[7].set_title('div')
+    LAY = LeadAllY(date, path)
+    n_skip = None
+    skip = (slice(None, None, n_skip), slice(None, None, n_skip))
+    im = axs[7].pcolormesh(LAY.xx[skip], LAY.yy[skip], id.divergence(np.array([LAY.u, LAY.v]), [62500, -62500]),
+                           transform=ccrs.NorthPolarStereo(-45), cmap='bwr', vmin=-2.e-6, vmax=2.e-6)
+    fig.colorbar(im, ax=axs[7])
+    plt.tight_layout()
+    plt.savefig(f'test_div_remap_{date}')
+'''
 
 
+
+
+
+''' generate image of lattice structure
+CG = CoordinateGridAllY()
+lon, lat = CG.lon, CG.lat
+fig, (ax1, ax2) = plt.subplots(1, 2, subplot_kw={"projection": ccrs.NorthPolarStereo(-45)}, figsize=(15, 10))
+
+ax1.coastlines(resolution='50m')
+ax1.set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+ax1.set_title('Leads lattice structure')
+struc = np.arange(lon.size).reshape(lon.shape)
+print(struc)
+im = ax1.pcolormesh(lon, lat, struc, cmap='jet', transform=ccrs.PlateCarree())
+fig.colorbar(im, ax=ax1, orientation='horizontal')
+plt.savefig('lattice_structure_leads')
+
+
+
+ax2.coastlines(resolution='50m')
+ax2.set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+ax2.set_title('Drift lattice structure')
+date = '20180108'
+# date_p = date[:4] + '_' + date[4:]
+dt_date = ds.string_time_to_datetime(date)
+dt_datem1, dt_datep1 = dt_date - datetime.timedelta(days=1), dt_date + datetime.timedelta(days=1)
+datem1, datep1 = ds.datetime_to_string(dt_datem1), ds.datetime_to_string(dt_datep1)
+path = './data/ice drift/Eumetsat/2010-2022/'
+path += f'ice_drift_nh_polstere-625_multi-oi_{datem1}1200-{datep1}1200.nc'
+LAY = LeadAllY(date, path)
+im = ax2.pcolormesh(LAY.xx, LAY.yy, np.arange(LAY.xx.size).reshape(LAY.xx.shape), transform=ccrs.NorthPolarStereo(-45))
+fig.colorbar(im, ax=ax2, orientation='horizontal')
+
+plt.tight_layout()
+plt.savefig('lattice_structure_leads')'''
 
 
 
