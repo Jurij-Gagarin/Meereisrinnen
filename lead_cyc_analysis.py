@@ -18,7 +18,7 @@ class Analysis:
         self.dates = ds.time_delta(date1, date2)
         self.leads, self.cycs, self.cycs_past, self.divs = [], [], [], []
         self.lon, self.lat = leads.CoordinateGridAllY().lon, leads.CoordinateGridAllY().lat
-        self.delta_days = 1
+        self.delta_days = 3
         self.sic_filter = 95.
 
         self.collect_ice_div = collect_ice_div
@@ -99,7 +99,11 @@ class Analysis:
                 no_cyc_divs.append(no_cyc_div)
                 cyc_divs.append(cyc_div)
 
-        if matrix3d:
+        if matrix3d and self.collect_ice_div:
+            return np.array(no_cyc_leads), np.array(cyc_leads), np.array(cyc_prior_leads), np.array(no_cyc_prior_leads), \
+                   np.array(no_cyc_divs), np.array(cyc_divs)
+
+        elif matrix3d:
             return np.array(no_cyc_leads), np.array(cyc_leads), np.array(cyc_prior_leads), np.array(no_cyc_prior_leads)
 
         elif self.collect_ice_div:
@@ -112,7 +116,7 @@ class Analysis:
                    np.nanmean(np.array(cyc_prior_leads), axis=0), np.nanmean(np.array(no_cyc_prior_leads), axis=0)
 
     def export_clustered_leads(self, m3d):
-        with open(f'./pickles/clustered_leads_{self.collect_ice_div}_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl', 'wb') as filehandler:
+        with open(f'./pickles/clustered_leads_m3d={m3d}_{self.collect_ice_div}_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl', 'wb') as filehandler:
             if m3d:
                 pickle.dump(self.cluster_leads(matrix3d=True),  filehandler)
             else:
@@ -125,7 +129,7 @@ class Analysis:
     def setup_plot(self):
         fig, ax = plt.subplots(self.nrows, self.ncols,
                                subplot_kw={"projection": ccrs.NearsidePerspective(-45, 90)})
-        fig.set_size_inches(32, 18)
+        fig.set_size_inches(20, 20)
         try:
             for i, a in enumerate(ax.flatten()):
                 a.coastlines(resolution='50m')
@@ -233,6 +237,50 @@ class Analysis:
         plt.tight_layout()
         plt.savefig(f'./plots/analysis/deep time/clustered_leads_sicfilter{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
+    def plot_clustered_div_significant(self, from_pickle=False):
+        path = f'./pickles/clustered_leads_m3d=True_True_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl'
+        print(path)
+        if from_pickle:
+            with open(path, 'rb') as pickle_in:
+                no_cyc, cyc, cyc_prior, no_cyc_prior, no_cyc_div, cyc_div = pickle.load(pickle_in)
+
+        else:
+            no_cyc, cyc, cyc_prior, no_cyc_prior, no_cyc_div, cyc_div = self.cluster_leads()
+
+        # perform T-test on divergence data cyclone vs. no cyclone
+        ttest = ttest_ind(cyc_div, no_cyc_div, nan_policy='omit', equal_var=False, axis=0)
+        pvalues, statistics = ttest.__getattribute__('pvalue'), ttest.__getattribute__('statistic')
+        print(cyc_div.shape)
+
+        self.nrows, self.ncols = 1, 2
+        fig, (ax1, ax2) = self.setup_plot()
+
+        im1 = ax1.pcolormesh(self.lon, self.lat, statistics, transform=ccrs.PlateCarree(),
+                             cmap='coolwarm')
+        ax1.set_title(f'T-test', fontsize=20)
+        fig.colorbar(im1, ax=ax1)
+
+        im2 = ax2.pcolormesh(self.lon, self.lat, pvalues, vmin=0., vmax=1., transform=ccrs.PlateCarree())
+        ax2.set_title(f'p-values', fontsize=20)
+        fig.colorbar(im2, ax=ax2)
+
+        plt.tight_layout()
+        plt.savefig(
+            f'./plots/analysis/significancy_div_{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
+
+        # plot only the significant results
+        cyc_div, no_cyc_div = np.nanmean(np.array(cyc_div), axis=0), np.nanmean(np.array(no_cyc_div), axis=0)
+        diff = cyc_div - no_cyc_div
+        self.nrows, self.ncols = 1, 1
+        fig, ax = self.setup_plot()
+        diff[pvalues >= .2] = np.nan
+        im1 = ax.pcolormesh(self.lon, self.lat, diff, vmin=-3.e-7, vmax=3.e-7, transform=ccrs.PlateCarree(), cmap='coolwarm')
+        ax.set_title(f'ice divergence, cyc - no cyc, values with p < 0.2', fontsize=20)
+        fig.colorbar(im1, ax=ax)
+        plt.tight_layout()
+        plt.savefig(
+            f'./plots/analysis/signif_res_div_{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
+
     def plot_clustered_leads_div(self, from_pickle=False):
         self.nrows, self.ncols = 1, 3
         if from_pickle:
@@ -247,7 +295,7 @@ class Analysis:
         fig, (ax1, ax2, ax3) = self.setup_plot()
 
         im1 = ax1.pcolormesh(self.lon, self.lat, np.nanmean(self.divs, axis=0), vmin=-6.e-07, vmax=6.e-07,
-                             transform=ccrs.NorthPolarStereo(-45), cmap='bwr')
+                             transform=ccrs.PlateCarree(), cmap='bwr')
         ax1.set_title('ice divergence', fontsize=20)
         fig.colorbar(im1, ax=ax1, orientation='vertical', fraction=0.046, pad=0.04)
 
@@ -260,7 +308,7 @@ class Analysis:
         fig.colorbar(im3, ax=ax3, orientation='vertical', fraction=0.046, pad=0.04)
         ax3.set_title(f'cyc prior - no cyc prior', fontsize=20)
 
-        plt.savefig('./clustered_divergence_test')
+        plt.savefig('./plots/clustered_divergence_test')
 
     def plot_clustered_leads_clustered_div(self, from_pickle=False):
         self.nrows, self.ncols = 1, 3
@@ -294,28 +342,29 @@ class Analysis:
             f'./plots/analysis/deep time/clustered_leads_clustered_div_sicfilter{int(self.sic_filter)}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
     def compare_deltadays(self):
-        img, diff = [], []
-        for i in range(1, 8):
+        img = []
+        for i in range(1, 7):
             print(i)
             self.leads, self.cycs, self.cycs_past = [], [], []
             self.delta_days = i
-            _, _, cyc_prior, no_cyc_prior = self.cluster_leads()
+            _, _, cyc_prior, no_cyc_prior, _, _ = self.cluster_leads()
             img.append(cyc_prior - no_cyc_prior)
-        img = np.array(img)
+        # img = np.array(img)
 
-        for i in range(len(img) - 1):
+        '''for i in range(len(img) - 1):
             print(i)
             diff.append(np.absolute(img[i+1] - img[i]))
 
         diff = np.array(diff)
         vcap = np.nanmax(diff) -.3
         print(vcap)
+        self.nrows, self.ncols = 2, 3'''
         self.nrows, self.ncols = 2, 3
         fig, axs = self.setup_plot()
-        for i, (dif, ax) in enumerate(zip(diff, axs.flatten())):
+        for i, ax in enumerate(axs.flatten()):
             print(i)
-            im = ax.pcolormesh(self.lon, self.lat, dif, transform=ccrs.PlateCarree(), vmin=0, vmax=vcap)
-            ax.set_title(f'Delta d = {i}')
+            im = ax.pcolormesh(self.lon, self.lat, img[i], transform=ccrs.PlateCarree(), cmap='bwr', vmin=-.1, vmax=.1)
+            ax.set_title(f'Delta d = {i + 1}')
 
             fig.colorbar(im, ax=ax)
         plt.tight_layout()
@@ -390,12 +439,15 @@ class Analysis:
             f'./plots/analysis/ndata_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}')
 
     def significance_test(self):
-        with open(f'./pickles/clustered_leads_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl', 'rb') as pickle_in:
+        path = f'./pickles/clustered_leads_m3d=True_True_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl'
+        print(path)
+        with open(path, 'rb') as pickle_in:
             _, _, cyc_prior, no_cyc_prior = pickle.load(pickle_in)
 
-        ttest = ttest_ind(cyc_prior, no_cyc_prior, nan_policy='omit', equal_var=False)
+        print(cyc_prior.shape, no_cyc_prior.shape)
+        ttest = ttest_ind(cyc_prior, no_cyc_prior, nan_policy='omit', equal_var=False, axis=0)
         pvalues, statistics = ttest.__getattribute__('pvalue'), ttest.__getattribute__('statistic')
-        print(statistics.reshape(self.lon.shape))
+        print(statistics.shape)
 
         self.nrows, self.ncols = 1, 2
         fig, (ax1, ax2) = self.setup_plot()
@@ -519,6 +571,32 @@ class Analysis:
         plt.tight_layout()
         plt.savefig('climatology_test2.png')
 
+    def leads_div_npoints(self, from_pickle):
+        path = f'./pickles/clustered_leads_m3d=True_{self.collect_ice_div}_{self.sic_filter}_{self.delta_days}_{self.dates[0]}_{self.dates[-1]}.pkl'
+        if from_pickle:
+            with open(path, 'rb') as pickle_in:
+                no_cyc, cyc, cyc_prior, no_cyc_prior, no_cyc_div, cyc_div = pickle.load(pickle_in)
+
+        else:
+            no_cyc, cyc, cyc_prior, no_cyc_prior, no_cyc_div, cyc_div = self.cluster_leads()
+
+        self.nrows, self.ncols = 2, 2
+        fig, axs = self.setup_plot()
+        axs = axs.flatten()
+
+        titles = ['leads cyc', 'leads NO cyc', 'div cyc', 'div NO cyc']
+
+        for ax, title, data in zip(axs, titles, [cyc_prior, no_cyc_prior, cyc_div, no_cyc_div]):
+            im = ax.pcolormesh(self.lon, self.lat, np.sum(~np.isnan(data), axis=0), vmin=0, vmax=1000, transform=ccrs.PlateCarree())
+            cbar = fig.colorbar(im, ax=ax)
+            cbar.ax.tick_params(labelsize=20)
+            ax.set_title(title, fontsize=20)
+
+
+
+        plt.tight_layout()
+        plt.savefig('./plots/analysis/n_points.png')
+
 
 def multi_year_average_lead_cyc(mean='day', plot=True):
     dates = ds.time_delta('20021101', '20151231')
@@ -591,11 +669,16 @@ if __name__ == '__main__':
     # A.plot_average_cyc_lead()
     # A = Analysis('20191105', '20191130')
     # A = Analysis('20100105', '20110215')
-    A = Analysis('20140101', '20191229')
+    A = Analysis('20140105', '20191229')
+    # A.delta_days = 2
     # A = Analysis('20180101', '20190429')
     # A.plot_clustered_leads_div()
-    A.export_clustered_leads(False)
-    A.plot_clustered_leads_clustered_div(True)
+    # A.export_clustered_leads(True)
+    # A.plot_clustered_leads_div(False)
+    # A.compare_deltadays()
+    # A.significance_test()
+    # A.plot_clustered_div_significant(True)
+    A.leads_div_npoints(True)
 
     # A.delta_days = 3
     # A.plot_clustered_leads(True)
@@ -609,6 +692,9 @@ if __name__ == '__main__':
         A.plot_clustered_leads()
     '''
     # multi_year_average_lead_cyc(mean='day')
+
+    arr = np.array([[[np.nan, 2, 3, 4], [1, 2, np.nan, 4], [1, 2, 3, 4]], [[np.nan, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]])
+    print(np.sum(~np.isnan(arr), axis=0))
 
     pass
 

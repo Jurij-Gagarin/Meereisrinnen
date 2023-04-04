@@ -274,13 +274,12 @@ class LeadAllY:
         dt_datem1, dt_datep1 = dt_date - datetime.timedelta(days=1), dt_date + datetime.timedelta(days=1)
         datem1, datep1 = ds.datetime_to_string(dt_datem1), ds.datetime_to_string(dt_datep1)
         path_lead = f'./data/DailyArcticLeadFraction_12p5km_Rheinlaender/data/LeadFraction_12p5km_{self.date}.nc'
-        path_cyc = f'./data/CO_2000_2019_remapbil.nc'
+        path_cyc = f'./data/CO_2_remapbil.nc'
         path_sic = f'./data/ERA5_SIC_2000_2019_remapbil.nc'
         path_drift = f'./data/ice drift/Eumetsat/2010-2022-remapbil/'
         path_drift += f'remapbil_ice_drift_nh_polstere-625_multi-oi_{datem1}1200-{datep1}1200.nc'
         ds_lead = nc.Dataset(path_lead)
         ds_cyc = nc.Dataset(path_cyc)
-        print(ds_cyc)
         ds_sic = nc.Dataset(path_sic)
 
         if path:
@@ -308,7 +307,7 @@ class LeadAllY:
             self.v[self.v.mask] = np.nan
             self.ice_div = id.divergence(np.array([self.u, self.v]), [12000, -12000])
         except ValueError:
-            print('remap failed')
+            print('could not find ice divergence data')
             pass
         except TypeError:
             print(f'failed to collect ice drift data for {self.date}')
@@ -365,8 +364,14 @@ def lead_avg_diff(date, avg):
 
 if __name__ == '__main__':
 
-    LeadAllY('20150101')
-    CoordinateGridAllY()
+    LAY = LeadAllY('20150101')
+    CG = CoordinateGridAllY()
+    lon, lat = CG.lon, CG.lat
+
+    fig, ax = plt.subplots(subplot_kw={"projection": ccrs.NorthPolarStereo(-45)}, figsize=(15, 10))
+    ax.coastlines(resolution='50m')
+    ax.set_extent(ci.arctic_extent, crs=ccrs.PlateCarree())
+    ax.set_title('divergence, test')
 
     # print(ds.time_delta2('20021101', '20210430'))
     # LeadAllY('20201230')

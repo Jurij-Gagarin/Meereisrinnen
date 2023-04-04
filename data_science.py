@@ -46,7 +46,7 @@ def time_delta(date1, date2):
 
     for i in range(delta.days + 1):
         day = start_date + timedelta(days=i)
-        if (day.month in [12, 1, 2, 3]) or (day.month == 11 and day.day >= 5) or (day.month == 4 and day.day <= 29):
+        if (day.month in [12, 1, 2, 3]) or (day.month == 11 and day.day >= 5) or (day.month == 4 and day.day <= 30):
             day = str(day)
             days.append(''.join(c for c in day if c not in '-'))
 
